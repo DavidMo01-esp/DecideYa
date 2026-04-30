@@ -9,9 +9,21 @@ import {
   validateUpdateDecision,
 } from '../server/src/validators/decisionValidator';
 
-const JSON_HEADERS = {
-  'content-type': 'application/json; charset=utf-8',
-};
+interface ApiRequest {
+  method?: string;
+  query?: {
+    path?: string | string[];
+  };
+  body?: unknown;
+}
+
+interface ApiResponse {
+  status(code: number): ApiResponse;
+  json(body: unknown): void;
+  setHeader(name: string, value: string): void;
+  send(body?: unknown): void;
+  end(): void;
+}
 
 let cachedDecisionService: DecisionService | null = null;
 
@@ -23,168 +35,190 @@ const getDecisionService = () => {
   return cachedDecisionService;
 };
 
-const jsonResponse = (
-  body: unknown,
-  status = 200,
-  headers: HeadersInit = {},
-) =>
-  new Response(JSON.stringify(body), {
-    status,
-    headers: {
-      ...JSON_HEADERS,
-      ...headers,
-    },
-  });
+const jsonResponse = (response: ApiResponse, statusCode: number, body: unknown) =>
+  response.status(statusCode).json(body);
 
-const noContentResponse = () => new Response(null, { status: 204 });
+const noContentResponse = (response: ApiResponse) => {
+  response.status(204);
+  response.end();
+};
 
-const methodNotAllowedResponse = (allowedMethods: string[]) =>
-  jsonResponse(
-    { error: 'Metodo no permitido' },
-    405,
-    { Allow: allowedMethods.join(', ') },
-  );
+const methodNotAllowedResponse = (
+  response: ApiResponse,
+  allowedMethods: string[],
+) => {
+  response.setHeader('Allow', allowedMethods.join(', '));
+  return jsonResponse(response, 405, { error: 'Metodo no permitido' });
+};
 
-const parseRouteSegments = (request: Request) => {
-  const { searchParams } = new URL(request.url);
-  const path = searchParams.get('path') ?? '';
+const parseRouteSegments = (request: ApiRequest) => {
+  const rawPath = request.query?.path;
+  const normalizedPath = Array.isArray(rawPath)
+    ? rawPath.join('/')
+    : rawPath ?? '';
 
-  return path
+  return normalizedPath
     .split('/')
     .map((segment) => segment.trim())
     .filter(Boolean);
 };
 
-const parseJsonBody = async <T>(request: Request) => {
-  const rawBody = await request.text();
-
-  if (!rawBody.trim()) {
+const parseJsonBody = <T>(body: unknown): T | { error: string } => {
+  if (body === undefined || body === null || body === '') {
     return {} as T;
   }
 
-  try {
-    return JSON.parse(rawBody) as T;
-  } catch {
-    return jsonResponse({ error: 'El cuerpo JSON no es valido' }, 400);
+  if (typeof body === 'string') {
+    try {
+      return JSON.parse(body) as T;
+    } catch {
+      return { error: 'El cuerpo JSON no es valido' };
+    }
   }
+
+  if (typeof Buffer !== 'undefined' && Buffer.isBuffer(body)) {
+    try {
+      return JSON.parse(body.toString('utf-8')) as T;
+    } catch {
+      return { error: 'El cuerpo JSON no es valido' };
+    }
+  }
+
+  return body as T;
 };
 
-const handleHealthRoute = (request: Request) => {
+const handleHealthRoute = (request: ApiRequest, response: ApiResponse) => {
   if (request.method !== 'GET') {
-    return methodNotAllowedResponse(['GET']);
+    return methodNotAllowedResponse(response, ['GET']);
   }
 
-  return jsonResponse({
+  return jsonResponse(response, 200, {
     status: 'ok',
     timestamp: new Date().toISOString(),
   });
 };
 
-const handleCollectionRoute = async (request: Request) => {
+const handleCollectionRoute = async (
+  request: ApiRequest,
+  response: ApiResponse,
+) => {
   const service = getDecisionService();
 
   if (request.method === 'GET') {
     const decisions = await service.getAll();
-    return jsonResponse(decisions);
+    return jsonResponse(response, 200, decisions);
   }
 
   if (request.method === 'POST') {
-    const payload = await parseJsonBody<CreateDecisionDTO>(request);
+    const payload = parseJsonBody<CreateDecisionDTO>(request.body);
 
-    if (payload instanceof Response) {
-      return payload;
+    if ('error' in payload) {
+      return jsonResponse(response, 400, payload);
     }
 
     const errors = validateCreateDecision(payload);
 
     if (errors.length > 0) {
-      return jsonResponse({ errors }, 400);
+      return jsonResponse(response, 400, { errors });
     }
 
     const decision = await service.create(payload);
-    return jsonResponse(decision, 201);
+    return jsonResponse(response, 201, decision);
   }
 
-  return methodNotAllowedResponse(['GET', 'POST']);
+  return methodNotAllowedResponse(response, ['GET', 'POST']);
 };
 
-const handleItemRoute = async (request: Request, decisionId: string) => {
+const handleItemRoute = async (
+  request: ApiRequest,
+  response: ApiResponse,
+  decisionId: string,
+) => {
   const service = getDecisionService();
 
   if (request.method === 'GET') {
     const decision = await service.getById(decisionId);
 
     if (!decision) {
-      return jsonResponse({ error: 'Decision no encontrada' }, 404);
+      return jsonResponse(response, 404, { error: 'Decision no encontrada' });
     }
 
-    return jsonResponse(decision);
+    return jsonResponse(response, 200, decision);
   }
 
   if (request.method === 'PUT') {
-    const payload = await parseJsonBody<UpdateDecisionDTO>(request);
+    const payload = parseJsonBody<UpdateDecisionDTO>(request.body);
 
-    if (payload instanceof Response) {
-      return payload;
+    if ('error' in payload) {
+      return jsonResponse(response, 400, payload);
     }
 
     const errors = validateUpdateDecision(payload);
 
     if (errors.length > 0) {
-      return jsonResponse({ errors }, 400);
+      return jsonResponse(response, 400, { errors });
     }
 
     const decision = await service.update(decisionId, payload);
 
     if (!decision) {
-      return jsonResponse({ error: 'Decision no encontrada' }, 404);
+      return jsonResponse(response, 404, { error: 'Decision no encontrada' });
     }
 
-    return jsonResponse(decision);
+    return jsonResponse(response, 200, decision);
   }
 
   if (request.method === 'DELETE') {
     const deleted = await service.delete(decisionId);
 
     if (!deleted) {
-      return jsonResponse({ error: 'Decision no encontrada' }, 404);
+      return jsonResponse(response, 404, { error: 'Decision no encontrada' });
     }
 
-    return noContentResponse();
+    return noContentResponse(response);
   }
 
-  return methodNotAllowedResponse(['GET', 'PUT', 'DELETE']);
+  return methodNotAllowedResponse(response, ['GET', 'PUT', 'DELETE']);
 };
 
-const routeRequest = async (request: Request) => {
+const routeRequest = async (request: ApiRequest, response: ApiResponse) => {
   const segments = parseRouteSegments(request);
 
   if (segments.length === 1 && segments[0] === 'health') {
-    return handleHealthRoute(request);
+    return handleHealthRoute(request, response);
   }
 
   if (segments.length === 1 && segments[0] === 'decisions') {
-    return handleCollectionRoute(request);
+    return handleCollectionRoute(request, response);
   }
 
   if (segments.length === 2 && segments[0] === 'decisions') {
-    return handleItemRoute(request, segments[1]);
+    return handleItemRoute(request, response, segments[1]);
   }
 
-  return jsonResponse({ error: 'Ruta no encontrada' }, 404);
+  return jsonResponse(response, 404, { error: 'Ruta no encontrada' });
 };
 
-export default {
-  async fetch(request: Request) {
-    try {
-      return await routeRequest(request);
-    } catch (error) {
-      const message =
-        error instanceof Error ? error.message : 'Error desconocido';
+export default async function handler(request: ApiRequest, response: ApiResponse) {
+  try {
+    await routeRequest(request, response);
+  } catch (error) {
+    const message =
+      error instanceof Error ? error.message : 'Error desconocido';
 
-      console.error('Error en la API de Vercel:', message);
+    console.error('Error en la API de Vercel:', message);
 
-      return jsonResponse({ error: 'Error interno del servidor' }, 500);
+    if (
+      typeof message === 'string' &&
+      message.includes('BLOB_READ_WRITE_TOKEN')
+    ) {
+      jsonResponse(response, 500, {
+        error:
+          'Falta BLOB_READ_WRITE_TOKEN en Vercel. Configuralo para guardar decisiones de forma persistente.',
+      });
+      return;
     }
-  },
-};
+
+    jsonResponse(response, 500, { error: 'Error interno del servidor' });
+  }
+}
