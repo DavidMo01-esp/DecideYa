@@ -9,10 +9,21 @@ import {
   type UpdateDecisionDTO,
 } from '../types/api';
 
-const DEFAULT_API_BASE_URL = 'http://localhost:3001/api';
+const LOCAL_API_PORT = '3001';
+const LOCAL_API_PROTOCOL = 'http:';
+
+const resolveDefaultApiBaseUrl = () => {
+  if (typeof window === 'undefined') {
+    return `${LOCAL_API_PROTOCOL}//localhost:${LOCAL_API_PORT}/api`;
+  }
+
+  const hostname = window.location.hostname || 'localhost';
+
+  return `${LOCAL_API_PROTOCOL}//${hostname}:${LOCAL_API_PORT}/api`;
+};
 
 export const API_BASE_URL = (
-  import.meta.env.VITE_API_BASE_URL ?? DEFAULT_API_BASE_URL
+  import.meta.env.VITE_API_BASE_URL ?? resolveDefaultApiBaseUrl()
 ).replace(/\/$/, '');
 
 const isValidationErrorResponse = (
