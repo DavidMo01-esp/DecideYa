@@ -1,4 +1,5 @@
 import { spawn, spawnSync } from 'node:child_process';
+import { networkInterfaces } from 'node:os';
 import path from 'node:path';
 import process from 'node:process';
 import { fileURLToPath } from 'node:url';
@@ -10,6 +11,29 @@ const npmCommand = process.platform === 'win32' ? 'npm.cmd' : 'npm';
 const isWindows = process.platform === 'win32';
 const shouldOpenBrowser = process.env.DECIDEYA_OPEN_BROWSER === '1';
 const clientCliArgs = process.argv.slice(2);
+const defaultNetworkHost = process.env.DECIDEYA_NETWORK_HOST ?? '0.0.0.0';
+
+const resolveLanAddress = () => {
+  const interfaces = networkInterfaces();
+
+  for (const addresses of Object.values(interfaces)) {
+    if (!addresses) {
+      continue;
+    }
+
+    const lanAddress = addresses.find(
+      (address) => address.family === 'IPv4' && !address.internal,
+    );
+
+    if (lanAddress) {
+      return lanAddress.address;
+    }
+  }
+
+  return null;
+};
+
+const lanAddress = resolveLanAddress();
 
 const isServiceAvailable = async (url) => {
   try {
@@ -44,15 +68,23 @@ const processDefinitions = [];
 
 if (!clientAlreadyRunning) {
   const clientArgs = ['run', 'dev:client'];
+  const forwardedClientArgs = [...clientCliArgs];
+  const hasHostFlag = forwardedClientArgs.some(
+    (arg) => arg === '--host' || arg.startsWith('--host='),
+  );
 
-  if (shouldOpenBrowser || clientCliArgs.length > 0) {
+  if (!hasHostFlag) {
+    forwardedClientArgs.unshift('--host', defaultNetworkHost);
+  }
+
+  if (shouldOpenBrowser || forwardedClientArgs.length > 0) {
     clientArgs.push('--');
 
     if (shouldOpenBrowser) {
       clientArgs.push('--open');
     }
 
-    clientArgs.push(...clientCliArgs);
+    clientArgs.push(...forwardedClientArgs);
   }
 
   processDefinitions.push({
@@ -70,6 +102,10 @@ if (!serverAlreadyRunning) {
     command: 'node',
     args: ['dist/index.js'],
     cwd: serverDirectory,
+    env: {
+      ...process.env,
+      DECIDEYA_SERVER_HOST: process.env.DECIDEYA_SERVER_HOST ?? defaultNetworkHost,
+    },
     shell: false,
   });
 }
@@ -94,7 +130,7 @@ const stopChildren = () => {
 for (const definition of processDefinitions) {
   const child = spawn(definition.command, definition.args, {
     cwd: definition.cwd,
-    env: process.env,
+    env: definition.env ?? process.env,
     shell: definition.shell,
     stdio: 'inherit',
   });
@@ -134,6 +170,9 @@ console.log(
     ? 'Frontend ya estaba activo en http://localhost:5173/.'
     : 'Frontend: http://localhost:5173/ (o el siguiente puerto libre)',
 );
+if (!clientAlreadyRunning && lanAddress) {
+  console.log(`Frontend en red local: http://${lanAddress}:5173/`);
+}
 if (!clientAlreadyRunning && !shouldOpenBrowser) {
   console.log(
     'El navegador no se abrira automaticamente. Usa DECIDEYA_OPEN_BROWSER=1 si quieres activarlo.',
@@ -144,6 +183,9 @@ console.log(
     ? 'Backend ya estaba activo en http://localhost:3001/health.'
     : 'Backend: http://localhost:3001/health',
 );
+if (!serverAlreadyRunning && lanAddress) {
+  console.log(`Backend en red local: http://${lanAddress}:3001/health`);
+}
 
 if (processDefinitions.length === 0) {
   console.log('No habia nada mas que iniciar.');
