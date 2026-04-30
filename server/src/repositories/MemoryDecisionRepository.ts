@@ -1,86 +1,67 @@
 import { randomUUID } from 'crypto';
-import type { Decision } from '../types';
+import type { Decision, UpdateDecisionDTO } from '../types';
 import type { DecisionRepository } from './DecisionRepository';
 
-const normalizeDecision = (decision: Partial<Decision>): Decision => ({
-  id: String(decision.id ?? ''),
-  title: String(decision.title ?? ''),
-  options: Array.isArray(decision.options) ? decision.options : [],
-  selectedOption:
-    typeof decision.selectedOption === 'string' ? decision.selectedOption : null,
-  createdAt: String(decision.createdAt ?? new Date().toISOString()),
-  updatedAt: String(decision.updatedAt ?? new Date().toISOString()),
-});
-
-let decisionsStore: Decision[] = [];
+let memoryStore: Decision[] = [];
 
 export class MemoryDecisionRepository implements DecisionRepository {
   async findAll(): Promise<Decision[]> {
-    return decisionsStore.map(normalizeDecision);
+    return memoryStore;
   }
 
-  async findById(id: string): Promise<Decision | undefined> {
-    return decisionsStore.find((decision) => decision.id === id);
+  async findById(id: string): Promise<Decision | null> {
+    return memoryStore.find((item) => item.id === id) ?? null;
   }
 
   async create(
     decision: Omit<Decision, 'id' | 'createdAt' | 'updatedAt'>,
   ): Promise<Decision> {
-    const newDecision: Decision = {
+    const now = new Date().toISOString();
+    const created: Decision = {
       ...decision,
       id: randomUUID(),
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
+      createdAt: now,
+      updatedAt: now,
     };
-
-    decisionsStore.push(newDecision);
-    return newDecision;
+    memoryStore.push(created);
+    return created;
   }
 
-  async update(
-    id: string,
-    data: Partial<Omit<Decision, 'id' | 'createdAt'>>,
-  ): Promise<Decision | null> {
-    const index = decisionsStore.findIndex((decision) => decision.id === id);
-
-    if (index === -1) {
+  async update(id: string, payload: UpdateDecisionDTO): Promise<Decision | null> {
+    const index = memoryStore.findIndex((item) => item.id === id);
+    if (index < 0) {
       return null;
     }
 
-    const currentDecision = decisionsStore[index];
-    const nextOptions = data.options ?? currentDecision.options;
-    const nextSelectedOptionCandidate =
-      data.selectedOption === undefined
-        ? currentDecision.selectedOption
-        : data.selectedOption;
+    const current = memoryStore[index];
+    const nextOptions = payload.options ?? current.options;
+    const selectedCandidate =
+      payload.selectedOption === undefined
+        ? current.selectedOption
+        : payload.selectedOption;
     const nextSelectedOption =
-      typeof nextSelectedOptionCandidate === 'string' &&
-      nextOptions.includes(nextSelectedOptionCandidate)
-        ? nextSelectedOptionCandidate
+      typeof selectedCandidate === 'string' && nextOptions.includes(selectedCandidate)
+        ? selectedCandidate
         : null;
 
-    const updatedDecision: Decision = {
-      ...currentDecision,
-      ...data,
+    const updated: Decision = {
+      ...current,
+      ...payload,
       options: nextOptions,
       selectedOption: nextSelectedOption,
       updatedAt: new Date().toISOString(),
     };
 
-    decisionsStore[index] = updatedDecision;
-    return updatedDecision;
+    memoryStore[index] = updated;
+    return updated;
   }
 
-  async delete(id: string): Promise<boolean> {
-    const filteredDecisions = decisionsStore.filter(
-      (decision) => decision.id !== id,
-    );
-
-    if (filteredDecisions.length === decisionsStore.length) {
+  async remove(id: string): Promise<boolean> {
+    const next = memoryStore.filter((item) => item.id !== id);
+    if (next.length === memoryStore.length) {
       return false;
     }
-
-    decisionsStore = filteredDecisions;
+    memoryStore = next;
     return true;
   }
 }

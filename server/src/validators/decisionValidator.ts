@@ -1,99 +1,126 @@
-import { CreateDecisionDTO, UpdateDecisionDTO, ValidationError } from '../types';
+import type {
+  CreateDecisionDTO,
+  UpdateDecisionDTO,
+  ValidationError,
+} from '../types';
 
-export const validateCreateDecision = (data: unknown): ValidationError[] => {
-  const errors: ValidationError[] = [];
-  const dto = data as CreateDecisionDTO;
+const isNonEmptyString = (value: unknown): value is string =>
+  typeof value === 'string' && value.trim().length > 0;
 
-  // Validar title
-  if (!dto.title || typeof dto.title !== 'string') {
-    errors.push({ field: 'title', message: 'El título es requerido' });
-  } else if (dto.title.trim().length < 3) {
-    errors.push({ field: 'title', message: 'El título debe tener al menos 3 caracteres' });
-  } else if (dto.title.trim().length > 100) {
-    errors.push({ field: 'title', message: 'El título no puede exceder 100 caracteres' });
+const validateOptions = (options: unknown): ValidationError[] => {
+  if (!Array.isArray(options)) {
+    return [{ field: 'options', message: 'Debe ser un arreglo de opciones.' }];
   }
 
-  // Validar options
-  if (!dto.options || !Array.isArray(dto.options)) {
-    errors.push({ field: 'options', message: 'Las opciones son requeridas' });
-  } else if (dto.options.length < 2) {
-    errors.push({ field: 'options', message: 'Se requieren al menos 2 opciones' });
-  } else if (dto.options.length > 6) {
-    errors.push({ field: 'options', message: 'Máximo 6 opciones permitidas' });
-  } else {
-    dto.options.forEach((opt, i) => {
-      if (!opt || typeof opt !== 'string' || !opt.trim()) {
-        errors.push({ field: `options[${i}]`, message: `La opción ${i + 1} no puede estar vacía` });
-      }
+  if (options.length < 2) {
+    return [
+      {
+        field: 'options',
+        message: 'Debes enviar al menos 2 opciones.',
+      },
+    ];
+  }
+
+  const hasInvalidOption = options.some((option) => !isNonEmptyString(option));
+  if (hasInvalidOption) {
+    return [
+      {
+        field: 'options',
+        message: 'Todas las opciones deben ser texto no vacio.',
+      },
+    ];
+  }
+
+  return [];
+};
+
+const validateSelectedOption = (
+  selectedOption: unknown,
+  options: string[] | undefined,
+): ValidationError[] => {
+  if (selectedOption === undefined || selectedOption === null) {
+    return [];
+  }
+
+  if (typeof selectedOption !== 'string') {
+    return [
+      {
+        field: 'selectedOption',
+        message: 'selectedOption debe ser string o null.',
+      },
+    ];
+  }
+
+  if (options && !options.includes(selectedOption)) {
+    return [
+      {
+        field: 'selectedOption',
+        message: 'selectedOption debe existir dentro de options.',
+      },
+    ];
+  }
+
+  return [];
+};
+
+export const validateCreateDecision = (
+  payload: CreateDecisionDTO,
+): ValidationError[] => {
+  const errors: ValidationError[] = [];
+
+  if (!isNonEmptyString(payload?.title)) {
+    errors.push({
+      field: 'title',
+      message: 'El titulo es obligatorio.',
     });
   }
 
-  if (dto.selectedOption !== undefined) {
-    if (dto.selectedOption !== null && typeof dto.selectedOption !== 'string') {
-      errors.push({ field: 'selectedOption', message: 'La opcion elegida debe ser texto o null' });
-    } else if (typeof dto.selectedOption === 'string' && !dto.selectedOption.trim()) {
-      errors.push({ field: 'selectedOption', message: 'La opcion elegida no puede estar vacia' });
-    } else if (
-      typeof dto.selectedOption === 'string' &&
-      Array.isArray(dto.options) &&
-      !dto.options.includes(dto.selectedOption)
-    ) {
-      errors.push({ field: 'selectedOption', message: 'La opcion elegida debe existir en la lista' });
-    }
+  errors.push(...validateOptions(payload?.options));
+
+  if (Array.isArray(payload?.options)) {
+    errors.push(
+      ...validateSelectedOption(payload?.selectedOption, payload.options),
+    );
   }
 
   return errors;
 };
 
-export const validateUpdateDecision = (data: unknown): ValidationError[] => {
+export const validateUpdateDecision = (
+  payload: UpdateDecisionDTO,
+): ValidationError[] => {
   const errors: ValidationError[] = [];
-  const dto = data as UpdateDecisionDTO;
 
-  // Si hay title, validarlo
-  if (dto.title !== undefined) {
-    if (typeof dto.title !== 'string') {
-      errors.push({ field: 'title', message: 'El título debe ser una cadena' });
-    } else if (dto.title.trim().length < 3) {
-      errors.push({ field: 'title', message: 'El título debe tener al menos 3 caracteres' });
-    } else if (dto.title.trim().length > 100) {
-      errors.push({ field: 'title', message: 'El título no puede exceder 100 caracteres' });
-    }
+  if (!payload || typeof payload !== 'object') {
+    return [{ field: 'body', message: 'Body invalido.' }];
   }
 
-  // Si hay options, validarlas
-  if (dto.options !== undefined) {
-    if (!Array.isArray(dto.options)) {
-      errors.push({ field: 'options', message: 'Las opciones deben ser un array' });
-    } else if (dto.options.length < 2) {
-      errors.push({ field: 'options', message: 'Se requieren al menos 2 opciones' });
-    } else if (dto.options.length > 6) {
-      errors.push({ field: 'options', message: 'Máximo 6 opciones permitidas' });
-    } else {
-      dto.options.forEach((opt, i) => {
-        if (!opt || typeof opt !== 'string' || !opt.trim()) {
-          errors.push({ field: `options[${i}]`, message: `La opción ${i + 1} no puede estar vacía` });
-        }
-      });
-    }
+  const hasFields =
+    payload.title !== undefined ||
+    payload.options !== undefined ||
+    payload.selectedOption !== undefined;
+
+  if (!hasFields) {
+    return [{ field: 'body', message: 'Debes enviar al menos un campo.' }];
   }
 
-  if (dto.selectedOption !== undefined) {
-    if (dto.selectedOption !== null && typeof dto.selectedOption !== 'string') {
-      errors.push({ field: 'selectedOption', message: 'La opcion elegida debe ser texto o null' });
-    } else if (typeof dto.selectedOption === 'string' && !dto.selectedOption.trim()) {
-      errors.push({ field: 'selectedOption', message: 'La opcion elegida no puede estar vacia' });
-    } else if (
-      typeof dto.selectedOption === 'string' &&
-      Array.isArray(dto.options) &&
-      !dto.options.includes(dto.selectedOption)
-    ) {
-      errors.push({ field: 'selectedOption', message: 'La opcion elegida debe existir en la lista' });
-    }
+  if (payload.title !== undefined && !isNonEmptyString(payload.title)) {
+    errors.push({
+      field: 'title',
+      message: 'Si se envia title, debe ser texto no vacio.',
+    });
   }
 
-  // Debe tener al menos un campo para actualizar
-  if (Object.keys(dto).length === 0) {
-    errors.push({ field: 'body', message: 'Debe proporcionar al menos un campo para actualizar' });
+  if (payload.options !== undefined) {
+    errors.push(...validateOptions(payload.options));
+  }
+
+  if (payload.options !== undefined) {
+    errors.push(
+      ...validateSelectedOption(payload.selectedOption, payload.options),
+    );
+  } else {
+    errors.push(...validateSelectedOption(payload.selectedOption, undefined));
   }
 
   return errors;

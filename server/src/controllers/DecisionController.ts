@@ -1,4 +1,4 @@
-import { Request, Response } from 'express';
+import type { NextFunction, Request, Response } from 'express';
 import { DecisionService } from '../services/DecisionService';
 import {
   validateCreateDecision,
@@ -6,65 +6,76 @@ import {
 } from '../validators/decisionValidator';
 
 export class DecisionController {
-  constructor(private service: DecisionService) {}
+  constructor(private readonly service: DecisionService) {}
 
-  getAll = async (_req: Request, res: Response): Promise<void> => {
-    const decisions = await this.service.getAll();
-    res.status(200).json(decisions);
+  getAll = async (_req: Request, res: Response, next: NextFunction) => {
+    try {
+      const decisions = await this.service.getAll();
+      res.status(200).json(decisions);
+    } catch (error) {
+      next(error);
+    }
   };
 
-  getById = async (req: Request, res: Response): Promise<void> => {
-    const { id } = req.params;
-    const decision = await this.service.getById(id);
-
-    if (!decision) {
-      res.status(404).json({ error: 'Decision no encontrada' });
-      return;
+  getById = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const decision = await this.service.getById(req.params.id);
+      if (!decision) {
+        res.status(404).json({ error: 'Decision no encontrada' });
+        return;
+      }
+      res.status(200).json(decision);
+    } catch (error) {
+      next(error);
     }
-
-    res.status(200).json(decision);
   };
 
-  create = async (req: Request, res: Response): Promise<void> => {
-    const errors = validateCreateDecision(req.body);
+  create = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const errors = validateCreateDecision(req.body);
+      if (errors.length > 0) {
+        res.status(400).json({ errors });
+        return;
+      }
 
-    if (errors.length > 0) {
-      res.status(400).json({ errors });
-      return;
+      const decision = await this.service.create(req.body);
+      res.status(201).json(decision);
+    } catch (error) {
+      next(error);
     }
-
-    const decision = await this.service.create(req.body);
-    res.status(201).json(decision);
   };
 
-  update = async (req: Request, res: Response): Promise<void> => {
-    const { id } = req.params;
-    const errors = validateUpdateDecision(req.body);
+  update = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const errors = validateUpdateDecision(req.body);
+      if (errors.length > 0) {
+        res.status(400).json({ errors });
+        return;
+      }
 
-    if (errors.length > 0) {
-      res.status(400).json({ errors });
-      return;
+      const decision = await this.service.update(req.params.id, req.body);
+      if (!decision) {
+        res.status(404).json({ error: 'Decision no encontrada' });
+        return;
+      }
+
+      res.status(200).json(decision);
+    } catch (error) {
+      next(error);
     }
-
-    const decision = await this.service.update(id, req.body);
-
-    if (!decision) {
-      res.status(404).json({ error: 'Decision no encontrada' });
-      return;
-    }
-
-    res.status(200).json(decision);
   };
 
-  delete = async (req: Request, res: Response): Promise<void> => {
-    const { id } = req.params;
-    const deleted = await this.service.delete(id);
+  remove = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const removed = await this.service.remove(req.params.id);
+      if (!removed) {
+        res.status(404).json({ error: 'Decision no encontrada' });
+        return;
+      }
 
-    if (!deleted) {
-      res.status(404).json({ error: 'Decision no encontrada' });
-      return;
+      res.status(204).send();
+    } catch (error) {
+      next(error);
     }
-
-    res.status(204).send();
   };
 }

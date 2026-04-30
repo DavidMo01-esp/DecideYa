@@ -1,30 +1,30 @@
-import { Decision, CreateDecisionDTO, UpdateDecisionDTO } from '../types';
+import type { CreateDecisionDTO, Decision, UpdateDecisionDTO } from '../types';
 import type { DecisionRepository } from '../repositories/DecisionRepository';
 
 export class DecisionService {
-  constructor(private repository: DecisionRepository) {}
+  constructor(private readonly repository: DecisionRepository) {}
 
   getAll(): Promise<Decision[]> {
     return this.repository.findAll();
   }
 
-  async getById(id: string): Promise<Decision | null> {
-    return (await this.repository.findById(id)) || null;
+  getById(id: string): Promise<Decision | null> {
+    return this.repository.findById(id);
   }
 
-  create(data: CreateDecisionDTO): Promise<Decision> {
+  create(payload: CreateDecisionDTO): Promise<Decision> {
     return this.repository.create({
-      title: data.title,
-      options: data.options,
-      selectedOption: data.selectedOption ?? null,
+      title: payload.title.trim(),
+      options: payload.options.map((item) => item.trim()),
+      selectedOption: payload.selectedOption ?? null,
     });
   }
 
-  update(id: string, data: UpdateDecisionDTO): Promise<Decision | null> {
-    return this.repository.update(id, data);
+  update(id: string, payload: UpdateDecisionDTO): Promise<Decision | null> {
+    return this.repository.update(id, payload);
   }
 
-  delete(id: string): Promise<boolean> {
-    return this.repository.delete(id);
+  remove(id: string): Promise<boolean> {
+    return this.repository.remove(id);
   }
 }
