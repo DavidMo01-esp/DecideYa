@@ -1,6 +1,6 @@
-# Diseno de la interfaz
+# Diseño de la interfaz
 
-El diseno de DecideYa busca un equilibrio entre claridad funcional y una presencia visual mas expresiva que la de una aplicacion utilitaria convencional. La interfaz no pretende parecer un panel administrativo neutro; quiere transmitir ligereza, rapidez y una cierta sensacion de juego.
+El diseño de DecideYa busca un equilibrio entre claridad funcional y una presencia visual mas expresiva que la de una aplicacion utilitaria convencional. La interfaz no pretende parecer un panel administrativo neutro; quiere transmitir ligereza, rapidez y una cierta sensacion de juego.
 
 ## Direccion visual
 
