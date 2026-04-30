@@ -59,8 +59,12 @@ El cliente:
 - convierte errores HTTP en `ApiClientError`
 - detecta errores de conexion
 - detecta cuando una URL de API devuelve HTML en lugar de JSON
+- adjunta `x-device-id` en cada request para aislar datos por dispositivo
 
 Ese ultimo caso es importante en despliegue: si `/api` devuelve la SPA, el cliente muestra un error de configuracion mas claro.
+
+Ademas, el cliente genera un `deviceId` y lo guarda en `localStorage` bajo `decideya-device-id`.
+Eso permite que el mismo navegador recupere siempre su propio conjunto de decisiones en la API.
 
 ## Flujo de uso
 

@@ -13,7 +13,7 @@ La misma aplicacion publica:
 El proyecto raiz contiene dos piezas:
 
 - la SPA en `src/`
-- la API de Vercel en `api/index.ts`, que reutiliza la logica de `server/src/`
+- la API de Vercel en `api/index.ts`
 
 En produccion no hace falta un segundo proyecto para el backend. Vercel sirve ambos lados desde el mismo dominio.
 
@@ -39,14 +39,16 @@ server/data/db.json
 
 En Vercel, la API usa `Vercel Blob`.
 
-Si `BLOB_READ_WRITE_TOKEN` no existe, la API hace fallback a memoria para que el despliegue siga funcionando. Ese modo es util para demos, pero no garantiza persistencia.
+La API separa datos por dispositivo usando el header `x-device-id`.
+Ese valor lo genera y conserva el frontend en `localStorage`, para que cada navegador tenga su propio espacio de decisiones.
+
+Si `BLOB_READ_WRITE_TOKEN` no existe, la API hace fallback a memoria para que el despliegue siga funcionando. Ese modo es util para demos, pero no garantiza persistencia entre reinicios.
 
 ## Variables de entorno necesarias
 
 ### Produccion en Vercel
 
 ```text
-DECISIONS_STORAGE=blob
 BLOB_READ_WRITE_TOKEN=<token de Vercel Blob>
 ```
 
@@ -91,10 +93,10 @@ URLs locales habituales:
 
 ## Flujo de publicacion recomendado
 
-1. Configurar `DECISIONS_STORAGE=blob`.
-2. Configurar `BLOB_READ_WRITE_TOKEN`.
-3. Desplegar la raiz del repositorio.
-4. Verificar `/health` y `/api/decisions`.
+1. Configurar `BLOB_READ_WRITE_TOKEN`.
+2. Desplegar la raiz del repositorio.
+3. Verificar `/health` y `/api/decisions`.
+4. Confirmar que el mismo dispositivo mantiene datos tras cerrar y abrir navegador.
 
 ## Archivos implicados
 
@@ -102,6 +104,5 @@ URLs locales habituales:
 - `package.json`
 - `api/index.ts`
 - `src/api/client.ts`
-- `server/src/repositories/createDecisionRepository.ts`
+- `server/src/app.ts`
 - `server/src/repositories/FileDecisionRepository.ts`
-- `server/src/repositories/BlobDecisionRepository.ts`

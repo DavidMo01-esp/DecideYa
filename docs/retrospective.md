@@ -33,7 +33,7 @@ El flujo real es este:
 2. La página llama a una acción del contexto.
 3. El contexto se apoya en `useDecisions()`.
 4. `useDecisions()` usa el cliente API tipado.
-5. El cliente API envía la petición a Express.
+5. El cliente API envía la petición al backend (Express en local, Vercel Function en producción).
 6. El backend valida, procesa y devuelve una respuesta JSON.
 7. El frontend actualiza el estado y vuelve a renderizar la UI.
 
@@ -86,10 +86,9 @@ Al revisar la documentación apareció otro problema real: no todos los archivos
 
 Por ejemplo:
 
-- la documentación de rutas hablaba de páginas que ya no se usan como antes
-- la documentación de hooks se había quedado por detrás del store actual
-- la documentación de componentes seguía una API anterior
-- `design.md` ni siquiera estaba completado
+- habia secciones de API y despliegue que ya no reflejaban bien la version final
+- algunos archivos seguian describiendo persistencia anterior
+- faltaba dejar clara la separación de datos por dispositivo
 
 Esto me hizo ver que la deuda documental existe igual que la deuda técnica.
 
@@ -97,7 +96,7 @@ Esto me hizo ver que la deuda documental existe igual que la deuda técnica.
 
 El despliegue fue probablemente el tramo con más fricción técnica. Los problemas más relevantes fueron:
 
-- entender que el proyecto necesitaba dos despliegues separados
+- alinear frontend y API bajo un único despliegue en Vercel
 - configurar correctamente la base URL del backend para el frontend
 - adaptar la persistencia a `Vercel Blob`
 - resolver errores de build causados por artefactos generados y dependencias versionadas

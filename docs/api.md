@@ -49,6 +49,7 @@ La API trabaja con un unico recurso:
 | GET | `/decisions/:id` | Devuelve una decision concreta |
 | POST | `/decisions` | Crea una nueva decision |
 | PUT | `/decisions/:id` | Actualiza una decision existente |
+| PATCH | `/decisions/:id` | Actualiza parcialmente una decision |
 | DELETE | `/decisions/:id` | Elimina una decision |
 | GET | `/health` | Comprueba que la API esta activa |
 
@@ -70,18 +71,31 @@ curl http://localhost:3001/health
 - `404 Not Found` cuando no existe la decision
 - `500 Internal Server Error` para fallos inesperados
 
-## Persistencia
+## Persistencia y aislamiento por dispositivo
 
-La API puede trabajar con dos estrategias:
-
-- en local: archivo JSON en `server/data/db.json`
-- en Vercel: `Vercel Blob`
-
-Si el despliegue de Vercel no tiene `BLOB_READ_WRITE_TOKEN`, la API cae a memoria para evitar errores de arranque. En ese caso los datos no son persistentes.
-
-La eleccion depende de las variables de entorno:
+La API mantiene un espacio de datos por dispositivo.
+El frontend envia el header:
 
 ```text
-DECISIONS_STORAGE=blob
-BLOB_READ_WRITE_TOKEN=<token>
+x-device-id: <uuid-del-dispositivo>
 ```
+
+La persistencia en produccion usa Vercel Blob y guarda por `deviceId`.
+De esta forma:
+
+- el mismo dispositivo conserva sus datos entre sesiones
+- distintos dispositivos no comparten decisiones entre si
+
+En desarrollo local, el backend de Express persiste en:
+
+```text
+server/data/db.json
+```
+
+En Vercel, la funcion `api/index.ts` persiste en Blob cuando existe el token:
+
+```text
+BLOB_READ_WRITE_TOKEN=<token de Vercel Blob>
+```
+
+Si falta ese token, la API hace fallback a memoria y los datos no sobreviven reinicios de la funcion.

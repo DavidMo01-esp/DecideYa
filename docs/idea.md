@@ -51,7 +51,7 @@ Aunque la idea funcional es sencilla, el proyecto sirvió también para construi
 - backend REST con Express
 - validación de datos
 - persistencia local y en producción
-- despliegue separado de cliente y servidor
+- despliegue unificado en Vercel (SPA + API)
 
 Eso convierte DecideYa en algo mas que una interfaz bonita: es una aplicacion completa, con flujo real de datos y con una separacion clara entre cliente, API y almacenamiento.
 
