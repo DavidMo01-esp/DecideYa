@@ -1,4 +1,5 @@
 import { randomUUID } from 'crypto';
+import { get, put } from '@vercel/blob';
 
 interface ApiRequest {
   method?: string;
@@ -41,6 +42,7 @@ interface ValidationError {
 }
 
 let decisionsStore: Decision[] = [];
+const DECISIONS_BLOB_PATH = 'decisions/data.json';
 
 const getPathSegments = (request: ApiRequest) => {
   const raw = request.query?.path;
@@ -183,9 +185,57 @@ const methodNotAllowed = (response: ApiResponse, allowed: string[]) => {
   return sendJson(response, 405, { error: 'Metodo no permitido' });
 };
 
+const hasBlobToken = () => Boolean(process.env.BLOB_READ_WRITE_TOKEN);
+
+const loadDecisions = async (): Promise<Decision[]> => {
+  if (!hasBlobToken()) {
+    return decisionsStore;
+  }
+
+  try {
+    const blob = await get(DECISIONS_BLOB_PATH, { access: 'private' });
+    if (!blob?.stream || blob.statusCode !== 200) {
+      return [];
+    }
+
+    const text = await new Response(blob.stream).text();
+    if (!text.trim()) {
+      return [];
+    }
+
+    const parsed = JSON.parse(text) as unknown;
+    if (!Array.isArray(parsed)) {
+      return [];
+    }
+
+    return parsed as Decision[];
+  } catch (error) {
+    const message = error instanceof Error ? error.message : '';
+    if (/not found/i.test(message)) {
+      return [];
+    }
+    throw error;
+  }
+};
+
+const saveDecisions = async (items: Decision[]): Promise<void> => {
+  decisionsStore = items;
+
+  if (!hasBlobToken()) {
+    return;
+  }
+
+  await put(DECISIONS_BLOB_PATH, JSON.stringify(items, null, 2), {
+    access: 'private',
+    allowOverwrite: true,
+    contentType: 'application/json',
+  });
+};
+
 const handleCollection = async (request: ApiRequest, response: ApiResponse) => {
   if (request.method === 'GET') {
-    return sendJson(response, 200, decisionsStore);
+    const decisions = await loadDecisions();
+    return sendJson(response, 200, decisions);
   }
 
   if (request.method === 'POST') {
@@ -208,7 +258,9 @@ const handleCollection = async (request: ApiRequest, response: ApiResponse) => {
       createdAt: now,
       updatedAt: now,
     };
-    decisionsStore.push(created);
+    const decisions = await loadDecisions();
+    decisions.push(created);
+    await saveDecisions(decisions);
     return sendJson(response, 201, created);
   }
 
@@ -220,13 +272,14 @@ const handleItem = async (
   response: ApiResponse,
   id: string,
 ) => {
-  const index = decisionsStore.findIndex((decision) => decision.id === id);
+  const decisions = await loadDecisions();
+  const index = decisions.findIndex((decision) => decision.id === id);
 
   if (request.method === 'GET') {
     if (index < 0) {
       return sendJson(response, 404, { error: 'Decision no encontrada' });
     }
-    return sendJson(response, 200, decisionsStore[index]);
+    return sendJson(response, 200, decisions[index]);
   }
 
   if (request.method === 'PUT' || request.method === 'PATCH') {
@@ -244,7 +297,7 @@ const handleItem = async (
       return sendJson(response, 404, { error: 'Decision no encontrada' });
     }
 
-    const current = decisionsStore[index];
+    const current = decisions[index];
     const nextOptions = payload.options ?? current.options;
     const selectedCandidate =
       payload.selectedOption === undefined
@@ -262,7 +315,8 @@ const handleItem = async (
       selectedOption: nextSelectedOption,
       updatedAt: new Date().toISOString(),
     };
-    decisionsStore[index] = updated;
+    decisions[index] = updated;
+    await saveDecisions(decisions);
 
     return sendJson(response, 200, updated);
   }
@@ -271,7 +325,8 @@ const handleItem = async (
     if (index < 0) {
       return sendJson(response, 404, { error: 'Decision no encontrada' });
     }
-    decisionsStore = decisionsStore.filter((decision) => decision.id !== id);
+    const next = decisions.filter((decision) => decision.id !== id);
+    await saveDecisions(next);
     response.status(204);
     response.end();
     return;
