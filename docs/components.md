@@ -1,14 +1,14 @@
 # Componentes principales
 
-La interfaz de DecideYa se apoya en un conjunto pequeno de componentes reutilizables. No existe una libreria de componentes completa, pero si una base comun suficiente para mantener coherencia visual y funcional.
+La interfaz de DecideYa se apoya en un conjunto pequeño de componentes reutilizables. No existe una librería de componentes completa, pero sí una base común suficiente para mantener coherencia visual y funcional.
 
 ## Criterios generales
 
 Los componentes comparten varias decisiones de diseño:
 
-- tipado explicito en TypeScript
+- tipado explícito en TypeScript
 - estilo visual basado en Tailwind y utilidades propias
-- jerarquia clara entre componentes de pagina y componentes reutilizables
+- jerarquía clara entre componentes de página y componentes reutilizables
 - responsabilidad concreta para cada pieza
 
 ## AppLayout
@@ -22,7 +22,7 @@ Es el layout comun de la aplicacion. Envuelve las rutas principales y se encarga
 - indicar el estado de sincronizacion de la red
 - ofrecer accesos de navegacion segun la pagina actual
 
-No contiene logica de negocio compleja, pero si actua como punto de union entre el contexto global y la navegacion.
+No contiene lógica de negocio compleja, pero sí actúa como punto de unión entre el contexto global y la navegación.
 
 ## Button
 
@@ -49,10 +49,10 @@ Representa una decision en el listado principal. Su funcion es resumir una entid
 
 Muestra:
 
-- titulo
-- numero de opciones
-- fecha de creacion
-- opcion elegida, si existe
+- título
+- número de opciones
+- fecha de creación
+- opción elegida, si existe
 - acceso al detalle
 - accion de borrado
 
@@ -66,22 +66,22 @@ Es el componente mas expresivo de la interfaz. No solo presenta informacion: tam
 
 Permite dos modos:
 
-- seleccion inmediata
+- selección inmediata
 - ruleta animada
 
 El componente es reutilizable porque recibe por props:
 
-- titulo
-- descripcion
-- mensaje vacio
+- título
+- descripción
+- mensaje vacío
 - lista de opciones
 
 Internamente gestiona:
 
-- rotacion de la ruleta
-- seleccion aleatoria
-- animacion temporal
-- estado de opcion elegida
+- rotación de la ruleta
+- selección aleatoria
+- animación temporal
+- estado de opción elegida
 
 ## ErrorBoundary
 

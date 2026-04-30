@@ -1,6 +1,6 @@
 # Capa de red del frontend
 
-La capa de red del frontend se diseno para que los componentes de React no dependan directamente de `fetch` ni de detalles HTTP. La idea central fue clara desde el inicio: la interfaz debia consumir la API como unica fuente de verdad y tratar la comunicacion con el backend como una responsabilidad separada.
+La capa de red del frontend se diseñó para que los componentes de React no dependan directamente de `fetch` ni de detalles HTTP. La idea central fue clara desde el inicio: la interfaz debía consumir la API como única fuente de verdad y tratar la comunicación con el backend como una responsabilidad separada.
 
 ## Objetivo
 
@@ -9,7 +9,7 @@ La capa de red resuelve cuatro necesidades:
 - centralizar la URL base de la API
 - encapsular las peticiones HTTP
 - tipar respuestas y errores con TypeScript
-- ofrecer una interfaz sencilla al resto de la aplicacion
+- ofrecer una interfaz sencilla al resto de la aplicación
 
 ## Estructura actual
 
@@ -25,7 +25,7 @@ src/
     api.ts
 ```
 
-Cada una de estas piezas cumple una funcion concreta:
+Cada una de estas piezas cumple una función concreta:
 
 - `client.ts` conoce HTTP y la forma de las respuestas.
 - `useDecisions.ts` orquesta la carga y las mutaciones.
@@ -34,10 +34,10 @@ Cada una de estas piezas cumple una funcion concreta:
 
 ## URL base y entornos
 
-La URL base de la API se resuelve asi:
+La URL base de la API se resuelve así:
 
 - en local, el valor por defecto es `http://localhost:3001/api`
-- en otros entornos, se puede sobreescribir con `VITE_API_BASE_URL`
+- en otros entornos, se puede sobrescribir con `VITE_API_BASE_URL`
 
 Esto permite mantener el mismo frontend apuntando a un backend local, a un backend desplegado en Vercel o a cualquier otro entorno de pruebas.
 
@@ -60,7 +60,7 @@ Detras de esas funciones hay una serie de decisiones tecnicas importantes:
 - `parseJson()` evita fallos cuando la respuesta no trae cuerpo
 - los errores HTTP se transforman en una instancia de `ApiClientError`
 
-Con este enfoque, los componentes no necesitan saber si el error fue un `400`, un `404` o un problema de conexion: reciben un mensaje coherente y pueden reaccionar de forma uniforme.
+Con este enfoque, los componentes no necesitan saber si el error fue un `400`, un `404` o un problema de conexión: reciben un mensaje coherente y pueden reaccionar de forma uniforme.
 
 ## Contrato de tipos
 
@@ -89,7 +89,7 @@ interface UpdateDecisionDTO {
 }
 ```
 
-Tambien se tipan los errores:
+También se tipan los errores:
 
 ```ts
 interface ApiErrorResponse {

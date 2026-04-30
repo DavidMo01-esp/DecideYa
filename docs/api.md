@@ -23,9 +23,9 @@ http://localhost:3001/health
 https://<backend-project>.vercel.app/health
 ```
 
-## Recurso principal: Decision
+## Recurso principal: Decisión
 
-La API trabaja con un unico recurso funcional:
+La API trabaja con un único recurso funcional:
 
 ```json
 {
@@ -40,27 +40,27 @@ La API trabaja con un unico recurso funcional:
 
 ### Campos
 
-- `id`: identificador unico
-- `title`: titulo de la decision
+- `id`: identificador único
+- `title`: título de la decisión
 - `options`: lista de opciones disponibles
-- `selectedOption`: opcion elegida manualmente o `null`
+- `selectedOption`: opción elegida manualmente o `null`
 - `createdAt`: fecha de creacion en formato ISO
 - `updatedAt`: fecha de ultima actualizacion en formato ISO
 
 ## Endpoints disponibles
 
-| Metodo | Ruta | Descripcion |
+| Método | Ruta | Descripción |
 | --- | --- | --- |
 | GET | `/decisions` | Lista todas las decisiones |
-| GET | `/decisions/:id` | Devuelve una decision concreta |
-| POST | `/decisions` | Crea una nueva decision |
-| PUT | `/decisions/:id` | Actualiza una decision existente |
-| DELETE | `/decisions/:id` | Elimina una decision |
+| GET | `/decisions/:id` | Devuelve una decisión concreta |
+| POST | `/decisions` | Crea una nueva decisión |
+| PUT | `/decisions/:id` | Actualiza una decisión existente |
+| DELETE | `/decisions/:id` | Elimina una decisión |
 | GET | `/health` | Comprueba que el backend esta activo |
 
 ## GET /decisions
 
-Devuelve la coleccion completa de decisiones.
+Devuelve la colección completa de decisiones.
 
 ### Ejemplo de peticion
 
@@ -74,7 +74,7 @@ curl http://localhost:3001/api/decisions
 [
   {
     "id": "550e8400-e29b-41d4-a716-446655440000",
-    "title": "Que hacemos este fin de semana",
+    "title": "Qué hacemos este fin de semana",
     "options": ["Cine", "Senderismo", "Cena fuera"],
     "selectedOption": null,
     "createdAt": "2026-04-30T08:15:00.000Z",
@@ -89,7 +89,7 @@ curl http://localhost:3001/api/decisions
 
 ## GET /decisions/:id
 
-Devuelve una unica decision a partir de su identificador.
+Devuelve una única decisión a partir de su identificador.
 
 ### Ejemplo de peticion
 

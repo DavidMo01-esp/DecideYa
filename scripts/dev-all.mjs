@@ -9,6 +9,7 @@ const serverDirectory = path.join(rootDirectory, 'server');
 const npmCommand = process.platform === 'win32' ? 'npm.cmd' : 'npm';
 const isWindows = process.platform === 'win32';
 const shouldOpenBrowser = process.env.DECIDEYA_OPEN_BROWSER === '1';
+const clientCliArgs = process.argv.slice(2);
 
 const isServiceAvailable = async (url) => {
   try {
@@ -42,12 +43,22 @@ if (!serverAlreadyRunning) {
 const processDefinitions = [];
 
 if (!clientAlreadyRunning) {
+  const clientArgs = ['run', 'dev:client'];
+
+  if (shouldOpenBrowser || clientCliArgs.length > 0) {
+    clientArgs.push('--');
+
+    if (shouldOpenBrowser) {
+      clientArgs.push('--open');
+    }
+
+    clientArgs.push(...clientCliArgs);
+  }
+
   processDefinitions.push({
     label: 'client',
     command: npmCommand,
-    args: shouldOpenBrowser
-      ? ['run', 'dev', '--', '--open']
-      : ['run', 'dev'],
+    args: clientArgs,
     cwd: rootDirectory,
     shell: isWindows,
   });

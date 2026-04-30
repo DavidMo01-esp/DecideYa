@@ -1,14 +1,14 @@
 # Diseño de la interfaz
 
-El diseño de DecideYa busca un equilibrio entre claridad funcional y una presencia visual mas expresiva que la de una aplicacion utilitaria convencional. La interfaz no pretende parecer un panel administrativo neutro; quiere transmitir ligereza, rapidez y una cierta sensacion de juego.
+El diseño de DecideYa busca un equilibrio entre claridad funcional y una presencia visual más expresiva que la de una aplicación utilitaria convencional. La interfaz no pretende parecer un panel administrativo neutro; quiere transmitir ligereza, rapidez y una cierta sensación de juego.
 
-## Direccion visual
+## Dirección visual
 
-La aplicacion se apoya en tres ideas principales:
+La aplicación se apoya en tres ideas principales:
 
 - una base clara y luminosa
 - tarjetas con efecto cristal suave
-- acentos de color que diferencian estados y bloques de informacion
+- acentos de color que diferencian estados y bloques de información
 
 El resultado es una interfaz amable, con suficiente contraste para guiar la lectura y con una identidad propia sin volverse recargada.
 
@@ -18,31 +18,31 @@ La paleta se define en `src/index.css` mediante variables CSS.
 
 Colores principales:
 
-- `--paper`: fondo base calido
+- `--paper`: fondo base cálido
 - `--ink`: color principal del texto
-- `--coral`: acento de accion y energia
+- `--coral`: acento de acción y energía
 - `--sky`: acento informativo
-- `--gold`: acento de apoyo y metricas
-- `--forest`: acento de seleccion o confirmacion
+- `--gold`: acento de apoyo y métricas
+- `--forest`: acento de selección o confirmación
 
 Tambien existen variantes suaves (`*-soft`) para fondos, tarjetas y badges.
 
-## Tipografia
+## Tipografía
 
 La interfaz utiliza dos familias con papeles distintos:
 
 - una sans serif para lectura general y elementos de interfaz
 - una serif para titulares y piezas con mayor peso visual
 
-Esa combinacion permite dar personalidad a la aplicacion sin comprometer la legibilidad.
+Esa combinación permite dar personalidad a la aplicación sin comprometer la legibilidad.
 
-## Fondo y atmosfera
+## Fondo y atmósfera
 
 El fondo no es plano. Combina:
 
 - degradados muy suaves
 - manchas radiales de color
-- una cuadricula casi imperceptible
+- una cuadrícula casi imperceptible
 
 Esto aporta profundidad visual sin competir con el contenido principal.
 
@@ -56,13 +56,13 @@ Buena parte de la interfaz se organiza en tarjetas. Hay varios estilos:
 - `sun-card`
 - `forest-card`
 
-Cada variante comparte una misma logica:
+Cada variante comparte una misma lógica:
 
 - borde sutil
 - sombreado blando
-- sensacion de capa flotante
+- sensación de capa flotante
 
-Ese sistema ayuda a separar bloques de informacion sin recurrir a divisores agresivos.
+Ese sistema ayuda a separar bloques de información sin recurrir a divisores agresivos.
 
 ## Componentes visuales destacados
 
@@ -70,29 +70,29 @@ Ese sistema ayuda a separar bloques de informacion sin recurrir a divisores agre
 
 La cabecera fija resume el estado global:
 
-- numero de decisiones
-- numero total de opciones
+- número de decisiones
+- número total de opciones
 - estado de red
 
-No es solo navegacion; tambien funciona como panel de estado.
+No es solo navegación; también funciona como panel de estado.
 
-### Tarjetas de decision
+### Tarjetas de decisión
 
-Las decisiones guardadas se muestran en tarjetas con jerarquia clara:
+Las decisiones guardadas se muestran en tarjetas con jerarquía clara:
 
-- titulo en primer plano
+- título en primer plano
 - metadatos compactos
 - resumen de opciones
-- accion rapida de apertura o borrado
+- acción rápida de apertura o borrado
 
 ### Ruleta
 
-La ruleta es el elemento mas distintivo de la app. Visualmente cumple dos funciones:
+La ruleta es el elemento más distintivo de la app. Visualmente cumple dos funciones:
 
 - introducir dinamismo
-- convertir una accion de eleccion en una experiencia mas memorable
+- convertir una acción de elección en una experiencia más memorable
 
-Su construccion con gradiente conico, puntero superior y animacion de giro refuerza esa idea.
+Su construcción con gradiente cónico, puntero superior y animación de giro refuerza esa idea.
 
 ## Movimiento
 

@@ -1,39 +1,39 @@
 # Retrospectiva final del proyecto
 
-## Una nota previa sobre la documentacion
+## Una nota previa sobre la documentación
 
-La revision completa de la carpeta `docs/` deja una conclusion clara: la documentacion del proyecto ha sido util, pero tambien ha reflejado las distintas etapas por las que ha pasado DecideYa. Algunos documentos estaban muy bien alineados con el estado final del codigo, especialmente los relacionados con la API y el despliegue. Otros, en cambio, describian una version anterior de la aplicacion.
+La revisión completa de la carpeta `docs/` deja una conclusión clara: la documentación del proyecto ha sido útil, pero también ha reflejado las distintas etapas por las que ha pasado DecideYa. Algunos documentos estaban muy bien alineados con el estado final del código, especialmente los relacionados con la API y el despliegue. Otros, en cambio, describían una versión anterior de la aplicación.
 
-Eso no invalida el trabajo hecho, pero si deja una leccion importante: documentar no es solo escribir, sino mantener la coherencia entre lo que el proyecto fue, lo que es y lo que realmente se entrega.
+Eso no invalida el trabajo hecho, pero sí deja una lección importante: documentar no es solo escribir, sino mantener la coherencia entre lo que el proyecto fue, lo que es y lo que realmente se entrega.
 
-## Que aprendi durante el desarrollo
+## Qué aprendí durante el desarrollo
 
 El aprendizaje principal fue entender que un proyecto aparentemente sencillo cambia por completo cuando deja de ser solo una interfaz y pasa a ser un sistema conectado de verdad.
 
-Al inicio, el problema parecia directo: crear una aplicacion para registrar decisiones y elegir una opcion. Sin embargo, en la practica aparecieron varias capas de complejidad:
+Al inicio, el problema parecía directo: crear una aplicación para registrar decisiones y elegir una opción. Sin embargo, en la práctica aparecieron varias capas de complejidad:
 
 - la estructura del frontend
-- la definicion de una API estable
-- la validacion de datos
+- la definición de una API estable
+- la validación de datos
 - la persistencia
-- la sincronizacion entre cliente y servidor
-- el despliegue real en produccion
+- la sincronización entre cliente y servidor
+- el despliegue real en producción
 
-En ese recorrido aprendi que la parte visual es solo una fraccion del trabajo. La solidez del proyecto dependio mucho mas de que las capas se entendieran bien entre si.
+En ese recorrido aprendí que la parte visual es solo una fracción del trabajo. La solidez del proyecto dependió mucho más de que las capas se entendieran bien entre sí.
 
-## Como se conectaron frontend, backend y API
+## Cómo se conectaron frontend, backend y API
 
 La arquitectura final se puede resumir de forma bastante limpia.
 
-En el frontend, React y TypeScript se encargan de la experiencia de usuario. La interfaz no accede directamente al backend desde cada componente, sino que delega la comunicacion en una capa de red centralizada.
+En el frontend, React y TypeScript se encargan de la experiencia de usuario. La interfaz no accede directamente al backend desde cada componente, sino que delega la comunicación en una capa de red centralizada.
 
 El flujo real es este:
 
-1. El usuario interactua con la interfaz.
-2. La pagina llama a una accion del contexto.
+1. El usuario interactúa con la interfaz.
+2. La página llama a una acción del contexto.
 3. El contexto se apoya en `useDecisions()`.
 4. `useDecisions()` usa el cliente API tipado.
-5. El cliente API envía la peticion a Express.
+5. El cliente API envía la petición a Express.
 6. El backend valida, procesa y devuelve una respuesta JSON.
 7. El frontend actualiza el estado y vuelve a renderizar la UI.
 
@@ -42,60 +42,60 @@ Este esquema hizo posible separar responsabilidades con bastante claridad:
 - los componentes renderizan
 - el hook coordina el flujo de datos
 - el cliente API encapsula HTTP
-- el backend aplica reglas y persiste informacion
+- el backend aplica reglas y persiste información
 
-## Lo mas valioso del uso de TypeScript
+## Lo más valioso del uso de TypeScript
 
-TypeScript aporto valor sobre todo en la definicion del contrato de datos. No fue solo una ayuda cosmetica para el editor.
+TypeScript aportó valor sobre todo en la definición del contrato de datos. No fue solo una ayuda cosmética para el editor.
 
-Los tipos obligaron a pensar con precision en detalles que facilmente podrian haberse dejado ambiguos:
+Los tipos obligaron a pensar con precisión en detalles que fácilmente podrían haberse dejado ambiguos:
 
-- que una decision siempre tiene `selectedOption` aunque pueda ser `null`
+- que una decisión siempre tiene `selectedOption` aunque pueda ser `null`
 - que crear y actualizar no tienen exactamente las mismas reglas
 - que una respuesta `204` no trae cuerpo
-- que los errores de validacion y los errores simples no comparten la misma forma
+- que los errores de validación y los errores simples no comparten la misma forma
 
 Ese trabajo de modelado redujo bastante el riesgo de incoherencias entre frontend y backend.
 
 ## Principales problemas encontrados
 
-### 1. Integracion entre frontend y API
+### 1. Integración entre frontend y API
 
-El mayor cambio de mentalidad fue abandonar una logica local de interfaz y pasar a depender de una API como fuente de verdad. Eso obligo a resolver cuestiones como:
+El mayor cambio de mentalidad fue abandonar una lógica local de interfaz y pasar a depender de una API como fuente de verdad. Eso obligó a resolver cuestiones como:
 
-- que URL usar en desarrollo y en produccion
-- como distinguir entre error de red y error de validacion
-- como refrescar el estado visible sin romper la experiencia del usuario
-- como evitar que el frontend se desincronizara del backend
+- qué URL usar en desarrollo y en producción
+- cómo distinguir entre error de red y error de validación
+- cómo refrescar el estado visible sin romper la experiencia del usuario
+- cómo evitar que el frontend se desincronizara del backend
 
-Tambien hubo que modelar con cuidado la diferencia entre una carga inicial y una actualizacion posterior, porque no se renderizan igual ni se perciben igual.
+También hubo que modelar con cuidado la diferencia entre una carga inicial y una actualización posterior, porque no se renderizan igual ni se perciben igual.
 
-### 2. Tipos y validacion
+### 2. Tipos y validación
 
 Otro foco importante fue la coherencia del contrato:
 
-- `selectedOption` debia ser opcional en la entrada, pero estable en la salida
-- el backend debia validar la forma de los datos sin volver demasiado rigido el flujo
-- el frontend tenia que traducir errores tecnicos en mensajes comprensibles
+- `selectedOption` debía ser opcional en la entrada, pero estable en la salida
+- el backend debía validar la forma de los datos sin volver demasiado rígido el flujo
+- el frontend tenía que traducir errores técnicos en mensajes comprensibles
 
 Esto hizo visible una idea que suele pasar desapercibida: los tipos buenos no se escriben solo para el compilador, sino para aclarar el comportamiento del sistema.
 
 ### 3. Desfase documental
 
-Al revisar la documentacion aparecio otro problema real: no todos los archivos reflejaban la version final del proyecto.
+Al revisar la documentación apareció otro problema real: no todos los archivos reflejaban la versión final del proyecto.
 
 Por ejemplo:
 
-- la documentacion de rutas hablaba de paginas que ya no se usan como antes
-- la documentacion de hooks se habia quedado por detras del store actual
-- la documentacion de componentes seguia una API anterior
+- la documentación de rutas hablaba de páginas que ya no se usan como antes
+- la documentación de hooks se había quedado por detrás del store actual
+- la documentación de componentes seguía una API anterior
 - `design.md` ni siquiera estaba completado
 
-Esto me hizo ver que la deuda documental existe igual que la deuda tecnica.
+Esto me hizo ver que la deuda documental existe igual que la deuda técnica.
 
 ### 4. Despliegue en Vercel
 
-El despliegue fue probablemente el tramo con mas friccion tecnica. Los problemas mas relevantes fueron:
+El despliegue fue probablemente el tramo con más fricción técnica. Los problemas más relevantes fueron:
 
 - entender que el proyecto necesitaba dos despliegues separados
 - configurar correctamente la base URL del backend para el frontend

@@ -1,6 +1,6 @@
 # Despliegue en Vercel
 
-DecideYa no se despliega como un unico proyecto monolitico dentro de Vercel. La arquitectura final separa claramente frontend y backend, y esa separacion debe respetarse tambien en produccion.
+DecideYa no se despliega como un único proyecto monolítico dentro de Vercel. La arquitectura final separa claramente frontend y backend, y esa separación debe respetarse también en producción.
 
 ## Estructura de despliegue
 
@@ -13,9 +13,9 @@ Si solo se crea el proyecto de la raiz, la interfaz puede llegar a publicarse, p
 
 ## Proyecto frontend
 
-Configuracion recomendada:
+Configuración recomendada:
 
-- **Root Directory**: raiz del repositorio
+- **Root Directory**: raíz del repositorio
 - **Build Command**: `npm run build`
 - **Output Directory**: `dist`
 
@@ -23,7 +23,7 @@ El enrutado de la SPA se resuelve con `vercel.json`, que reescribe las rutas al 
 
 ## Proyecto backend
 
-Configuracion recomendada:
+Configuración recomendada:
 
 - **Root Directory**: `server`
 - **Build Command**: `npm run build`
@@ -38,7 +38,7 @@ En desarrollo local, el backend utiliza un archivo JSON:
 server/data/db.json
 ```
 
-En produccion, el backend debe usar `Vercel Blob`. La eleccion se controla con variables de entorno.
+En producción, el backend debe usar `Vercel Blob`. La elección se controla con variables de entorno.
 
 ## Variables de entorno necesarias
 
@@ -61,22 +61,22 @@ BLOB_READ_WRITE_TOKEN=<token de Vercel Blob>
 
 Antes de publicar el frontend conviene validar que la API ya funciona.
 
-Comprobaciones minimas:
+Comprobaciones mínimas:
 
 ```text
 GET https://<backend-project>.vercel.app/health
 GET https://<backend-project>.vercel.app/api/decisions
 ```
 
-Si estas dos rutas responden correctamente, el backend esta operativo.
+Si estas dos rutas responden correctamente, el backend está operativo.
 
-### 2. Configurar despues el frontend
+### 2. Configurar después el frontend
 
 Una vez conocida la URL final del backend:
 
 1. Se crea el proyecto frontend.
 2. Se configura `VITE_API_BASE_URL`.
-3. Se despliega la raiz del repositorio.
+3. Se despliega la raíz del repositorio.
 
 ## Desarrollo local
 
@@ -88,9 +88,9 @@ npm run dev
 
 Ese script:
 
-- comprueba si frontend y backend ya estan activos
+- comprueba si frontend y backend ya están activos
 - compila el backend si es necesario
-- levanta Vite en la raiz
+- levanta Vite en la raíz
 - ejecuta el backend desde `server/dist/index.js`
 
 URLs locales habituales:

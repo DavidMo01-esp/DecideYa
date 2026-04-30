@@ -1,61 +1,61 @@
 # Estructura de rutas
 
-La aplicacion utiliza `react-router-dom` para organizar la navegacion entre la vista principal, el detalle de una decision y las rutas de error.
+La aplicación utiliza `react-router-dom` para organizar la navegación entre la vista principal, el detalle de una decisión y las rutas de error.
 
 ## Objetivo del enrutado
 
-La idea no fue crear una estructura compleja, sino una navegacion clara y facil de mantener. La aplicacion tiene pocas pantallas, pero cada una responde a una responsabilidad concreta.
+La idea no fue crear una estructura compleja, sino una navegación clara y fácil de mantener. La aplicación tiene pocas pantallas, pero cada una responde a una responsabilidad concreta.
 
 ## Rutas actuales
 
-| Ruta | Componente | Funcion |
+| Ruta | Componente | Función |
 | --- | --- | --- |
 | `/` | `Decisions` | Pantalla principal con formulario, listado y ruleta de borrador |
 | `/decisions` | `Decisions` | Alias de la pantalla principal |
-| `/decisions/:decisionId` | `DecisionDetail` | Vista de detalle de una decision |
-| `/about` | `Navigate` | Redireccion a `/` |
+| `/decisions/:decisionId` | `DecisionDetail` | Vista de detalle de una decisión |
+| `/about` | `Navigate` | Redirección a `/` |
 | `*` | `NotFound` | Manejo de rutas inexistentes |
 
-## Layout comun
+## Layout común
 
 Todas las rutas principales cuelgan de `AppLayout`, que se encarga de:
 
-- renderizar la cabecera comun
-- mostrar metricas globales
+- renderizar la cabecera común
+- mostrar métricas globales
 - reflejar el estado general de la red
-- insertar el contenido de cada pagina mediante `Outlet`
+- insertar el contenido de cada página mediante `Outlet`
 
 Esto evita repetir estructura y mantiene una experiencia visual consistente.
 
-## Pagina principal
+## Página principal
 
-La ruta `/` ya no funciona como una portada separada. Hoy actua como punto de entrada real de la aplicacion y renderiza directamente `Decisions`.
+La ruta `/` ya no funciona como una portada separada. Hoy actúa como punto de entrada real de la aplicación y renderiza directamente `Decisions`.
 
-Esa decision simplifica la navegacion:
+Esa decisión simplifica la navegación:
 
-- el usuario entra y ya puede crear una decision
-- el listado de contenido esta disponible desde el inicio
-- no existe una pantalla intermedia vacia
+- el usuario entra y ya puede crear una decisión
+- el listado de contenido está disponible desde el inicio
+- no existe una pantalla intermedia vacía
 
 ## Ruta de detalle
 
-`/decisions/:decisionId` abre una decision concreta.
+`/decisions/:decisionId` abre una decisión concreta.
 
 En esta pantalla el usuario puede:
 
-- consultar la decision completa
-- marcar o quitar una opcion elegida
+- consultar la decisión completa
+- marcar o quitar una opción elegida
 - lanzar la ruleta
-- eliminar la decision
+- eliminar la decisión
 
-Si el identificador no existe, la aplicacion reutiliza `NotFound` con un mensaje adaptado al caso.
+Si el identificador no existe, la aplicación reutiliza `NotFound` con un mensaje adaptado al caso.
 
 ## Rutas no utilizadas de forma funcional
 
-La ruta `/about` no muestra actualmente una pagina propia. Se mantiene como redireccion a `/`, probablemente como resto de una fase anterior del proyecto o como posible punto de extension futuro.
+La ruta `/about` no muestra actualmente una página propia. Se mantiene como redirección a `/`, probablemente como resto de una fase anterior del proyecto o como posible punto de extensión futuro.
 
 ## Manejo de errores de ruta
 
-La ruta comodin `*` envia al usuario a `NotFound`. Esta pantalla se usa tanto para URLs inexistentes como para decisiones que ya no estan disponibles.
+La ruta comodín `*` envía al usuario a `NotFound`. Esta pantalla se usa tanto para URLs inexistentes como para decisiones que ya no están disponibles.
 
-Con ello se consigue una estrategia de error coherente y facil de entender.
+Con ello se consigue una estrategia de error coherente y fácil de entender.

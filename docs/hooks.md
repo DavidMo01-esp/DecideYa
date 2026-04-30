@@ -1,6 +1,6 @@
 # Hooks del proyecto
 
-DecideYa utiliza hooks de React para separar la logica de datos de la capa visual. El hook mas importante del proyecto es `useDecisions()`, ya que concentra la comunicacion con la API y el estado compartido de la aplicacion.
+DecideYa utiliza hooks de React para separar la lógica de datos de la capa visual. El hook más importante del proyecto es `useDecisions()`, ya que concentra la comunicación con la API y el estado compartido de la aplicación.
 
 ## Hook principal: useDecisions
 
@@ -23,12 +23,12 @@ Archivo: `src/hooks/useDecisions.ts`
 
 ### Responsabilidades
 
-- cargar las decisiones al montar la aplicacion
+- cargar las decisiones al montar la aplicación
 - crear nuevas decisiones
 - eliminar decisiones existentes
-- actualizar la opcion elegida
+- actualizar la opción elegida
 - gestionar los estados de red
-- ofrecer una accion de recarga manual
+- ofrecer una acción de recarga manual
 
 ## Hooks de React que utiliza
 
@@ -58,9 +58,9 @@ Se usa para estabilizar las funciones principales del store:
 
 ### useRef
 
-`decisionsRef` permite acceder a la version mas reciente de la coleccion durante operaciones asincronas sin depender de cierres desactualizados.
+`decisionsRef` permite acceder a la versión más reciente de la colección durante operaciones asincronas sin depender de cierres desactualizados.
 
-Este detalle fue importante para actualizar la lista despues de crear, eliminar o modificar decisiones sin introducir errores de sincronizacion.
+Este detalle fue importante para actualizar la lista después de crear, eliminar o modificar decisiones sin introducir errores de sincronización.
 
 ## Estado de red
 
@@ -77,10 +77,10 @@ Gracias a eso, los componentes pueden decidir si mostrar skeletons, datos o mens
 
 ## Relacion con el resto de la app
 
-`useDecisions()` no se consume directamente desde todas las paginas. Normalmente se utiliza a traves de `DecisionContext`, que lo comparte con toda la arborescencia de la aplicacion.
+`useDecisions()` no se consume directamente desde todas las páginas. Normalmente se utiliza a través de `DecisionContext`, que lo comparte con toda la arborescencia de la aplicación.
 
-Eso permite mantener un solo punto de acceso al estado de decisiones y evita inicializar logica de red duplicada en distintos componentes.
+Eso permite mantener un solo punto de acceso al estado de decisiones y evita inicializar lógica de red duplicada en distintos componentes.
 
 ## Conclusiones
 
-El hook termino siendo una de las piezas mas importantes del proyecto porque dio una forma ordenada a la integracion entre frontend y backend. Sin el, la logica de red habria quedado dispersa entre componentes y la aplicacion seria bastante mas dificil de mantener.
+El hook terminó siendo una de las piezas más importantes del proyecto porque dio una forma ordenada a la integración entre frontend y backend. Sin él, la lógica de red habría quedado dispersa entre componentes y la aplicación sería bastante más difícil de mantener.

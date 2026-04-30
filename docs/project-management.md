@@ -1,31 +1,31 @@
-# Organizacion del trabajo
+# Organización del trabajo
 
-El desarrollo de DecideYa se gestiono como un proyecto incremental, con una estructura ligera pero suficiente para mantener orden tecnico y visibilidad del avance.
+El desarrollo de DecideYa se gestionó como un proyecto incremental, con una estructura ligera pero suficiente para mantener orden técnico y visibilidad del avance.
 
 ## Principio de trabajo
 
-La logica general fue sencilla:
+La lógica general fue sencilla:
 
 - dividir el proyecto en bloques funcionales
 - priorizar primero lo que desbloqueaba el resto
-- revisar integracion y documentacion al cierre de cada tramo relevante
+- revisar integración y documentación al cierre de cada tramo relevante
 
 No se siguio un proceso burocratico. Se busco una organizacion realista para un proyecto pequeno, pero con suficiente disciplina para no perder trazabilidad.
 
 ## Flujo de estados
 
-La gestion de tareas se puede resumir en cuatro estados:
+La gestión de tareas se puede resumir en cuatro estados:
 
-- **Pendiente**: trabajo identificado, pero aun no iniciado
+- **Pendiente**: trabajo identificado, pero aún no iniciado
 - **En curso**: tarea activa en desarrollo
-- **En revision**: funcionalidad terminada pendiente de comprobacion
+- **En revisión**: funcionalidad terminada pendiente de comprobación
 - **Cerrado**: trabajo validado y asumido como parte estable del proyecto
 
 ## Bloques principales del proyecto
 
 El trabajo termino agrupandose de forma natural en varias areas:
 
-### 1. Definicion funcional
+### 1. Definición funcional
 
 - idea del producto
 - problema a resolver
@@ -33,7 +33,7 @@ El trabajo termino agrupandose de forma natural en varias areas:
 
 ### 2. Interfaz de usuario
 
-- estructura de paginas
+- estructura de páginas
 - componentes reutilizables
 - estilo visual y experiencia de uso
 
@@ -41,31 +41,31 @@ El trabajo termino agrupandose de forma natural en varias areas:
 
 - modelado del recurso `Decision`
 - endpoints REST
-- validacion de datos
+- validación de datos
 - capa de persistencia
 
-### 4. Integracion
+### 4. Integración
 
 - cliente API tipado
-- gestion de estado compartido
-- sincronizacion entre UI y backend
+- gestión de estado compartido
+- sincronización entre UI y backend
 
 ### 5. Despliegue y cierre
 
-- preparacion de Vercel
-- resolucion de incidencias de build
-- revision completa de documentacion
+- preparación de Vercel
+- resolución de incidencias de build
+- revisión completa de documentación
 
-## Estructura tecnica que ayudo a gestionar el trabajo
+## Estructura técnica que ayudó a gestionar el trabajo
 
-La propia arquitectura favorecio la organizacion:
+La propia arquitectura favoreció la organización:
 
 - frontend en `src/`
 - backend en `server/src/`
-- documentacion en `docs/`
+- documentación en `docs/`
 
-Esa separacion permitio trabajar cada capa con un foco claro y detectar antes los puntos de integracion.
+Esa separación permitió trabajar cada capa con un foco claro y detectar antes los puntos de integración.
 
-## Leccion principal
+## Lección principal
 
-La mayor leccion de gestion fue que la documentacion no debia quedar para el final como una tarea decorativa. En un proyecto con cambios de arquitectura y despliegue, documentar a tiempo reduce errores y hace mucho mas facil explicar el sistema una vez que ya funciona.
+La mayor lección de gestión fue que la documentación no debía quedar para el final como una tarea decorativa. En un proyecto con cambios de arquitectura y despliegue, documentar a tiempo reduce errores y hace mucho más fácil explicar el sistema una vez que ya funciona.
