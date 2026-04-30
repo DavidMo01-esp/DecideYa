@@ -30,11 +30,13 @@ const parseDecisionList = async () => {
         ? (error as { statusCode: number }).statusCode
         : null;
 
-    if (statusCode === 404 || /not found/i.test(message)) {
-      return [] as Decision[];
+    if (statusCode !== 404 && !/not found/i.test(message)) {
+      console.error(
+        `No se pudo leer ${DECISIONS_BLOB_PATH} desde Blob. Se devolvera lista vacia. ${message}`,
+      );
     }
 
-    throw error;
+    return [] as Decision[];
   }
 
   if (!result || result.statusCode !== 200 || !result.stream) {
