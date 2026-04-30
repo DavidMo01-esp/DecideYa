@@ -1,153 +1,139 @@
 # Despliegue en Vercel
 
-Importante: este repo no funciona completo con un unico proyecto de Vercel creado en la raiz. Si haces eso, solo desplegaras el frontend. Para que la app funcione de verdad necesitas tambien el proyecto backend con `Root Directory = server`.
+DecideYa no se despliega como un unico proyecto monolitico dentro de Vercel. La arquitectura final separa claramente frontend y backend, y esa separacion debe respetarse tambien en produccion.
 
-Esta app se despliega como dos proyectos de Vercel dentro del mismo repositorio:
+## Estructura de despliegue
 
-- frontend: raiz del repo
-- backend: directorio `server`
+Se necesitan dos proyectos de Vercel conectados al mismo repositorio:
 
-## Requisitos
+- un proyecto frontend apuntando a la raiz del repositorio
+- un proyecto backend apuntando al directorio `server`
 
-- Cuenta de Vercel con acceso al repositorio
-- Vercel Blob habilitado para el proyecto backend
-- Vercel CLI opcional si quieres desplegar desde terminal
+Si solo se crea el proyecto de la raiz, la interfaz puede llegar a publicarse, pero la aplicacion no funcionara correctamente porque el frontend necesita una API activa para leer y guardar decisiones.
 
-## Arquitectura de despliegue
+## Proyecto frontend
 
-### Frontend
+Configuracion recomendada:
 
-- Proyecto Vercel apuntando a la raiz del repo
-- Build command: `npm run build`
-- Output directory: `dist`
-- Routing SPA resuelto con `vercel.json`
+- **Root Directory**: raiz del repositorio
+- **Build Command**: `npm run build`
+- **Output Directory**: `dist`
 
-### Backend
+El enrutado de la SPA se resuelve con `vercel.json`, que reescribe las rutas al `index.html` generado por Vite.
 
-- Proyecto Vercel apuntando a `server`
-- Entrada detectada por Vercel en `server/index.ts`
-- Entrada Express exportable en `server/src/app.ts`
-- Persistencia en produccion con Vercel Blob
-- API publica bajo:
+## Proyecto backend
 
-```text
-https://<backend-project>.vercel.app/api/decisions
-https://<backend-project>.vercel.app/health
-```
+Configuracion recomendada:
 
-## Variables de entorno
+- **Root Directory**: `server`
+- **Build Command**: `npm run build`
 
-### Backend
+El backend esta preparado para exponer la API desde Express y para ser detectado por Vercel con una entrada valida en `server/index.ts`.
 
-Configura estas variables en el proyecto `server`:
+## Persistencia en cada entorno
+
+En desarrollo local, el backend utiliza un archivo JSON:
 
 ```text
-DECISIONS_STORAGE=blob
-BLOB_READ_WRITE_TOKEN=<token generado por Vercel Blob>
+server/data/db.json
 ```
 
-Notas:
+En produccion, el backend debe usar `Vercel Blob`. La eleccion se controla con variables de entorno.
 
-- en local, si no defines `DECISIONS_STORAGE`, el backend usa `server/data/db.json`
-- en Vercel, el backend esta preparado para fallar de forma explicita si falta `BLOB_READ_WRITE_TOKEN`
+## Variables de entorno necesarias
 
 ### Frontend
-
-Configura esta variable en el proyecto frontend:
 
 ```text
 VITE_API_BASE_URL=https://<backend-project>.vercel.app/api
 ```
 
-## Paso a paso en el dashboard
-
-### 1. Crear el proyecto backend
-
-1. En Vercel, elige `Add New -> Project`.
-2. Selecciona este repositorio.
-3. Define `Root Directory` como `server`.
-4. Crea o conecta un Blob Store.
-5. Agrega:
+### Backend
 
 ```text
 DECISIONS_STORAGE=blob
-BLOB_READ_WRITE_TOKEN=<token>
+BLOB_READ_WRITE_TOKEN=<token de Vercel Blob>
 ```
 
-6. Despliega.
-7. Anota la URL final del backend.
+## Flujo recomendado de despliegue
 
-### 2. Verificar el backend
+### 1. Desplegar primero el backend
 
-Comprueba al menos:
+Antes de publicar el frontend conviene validar que la API ya funciona.
+
+Comprobaciones minimas:
 
 ```text
 GET https://<backend-project>.vercel.app/health
 GET https://<backend-project>.vercel.app/api/decisions
 ```
 
-Si ambas responden, el backend esta operativo.
+Si estas dos rutas responden correctamente, el backend esta operativo.
 
-### 3. Crear el proyecto frontend
+### 2. Configurar despues el frontend
 
-1. Crea otro proyecto en Vercel usando el mismo repositorio.
-2. Deja `Root Directory` en la raiz del repo.
-3. Configura:
+Una vez conocida la URL final del backend:
 
-```text
-VITE_API_BASE_URL=https://<backend-project>.vercel.app/api
-```
+1. Se crea el proyecto frontend.
+2. Se configura `VITE_API_BASE_URL`.
+3. Se despliega la raiz del repositorio.
 
-4. Despliega.
+## Desarrollo local
 
-## Despliegue con CLI
-
-### Backend
-
-Desde `server`:
+El comando principal del proyecto es:
 
 ```bash
-vercel
-vercel --prod
+npm run dev
 ```
 
-### Frontend
+Ese script:
 
-Desde la raiz:
+- comprueba si frontend y backend ya estan activos
+- compila el backend si es necesario
+- levanta Vite en la raiz
+- ejecuta el backend desde `server/dist/index.js`
 
-```bash
-vercel
-vercel --prod
-```
+URLs locales habituales:
 
-Si el proyecto ya existe, Vercel reutiliza el enlace local tras el primer deploy.
+- frontend: `http://localhost:5173`
+- backend: `http://localhost:3001`
+- health: `http://localhost:3001/health`
 
-## Verificacion en produccion
+## Problemas reales encontrados
 
-Una vez desplegados ambos proyectos:
+Durante el despliegue aparecieron varios puntos sensibles:
 
-1. Abre el frontend en produccion.
-2. Crea una decision con al menos dos opciones.
-3. Recarga la pagina.
-4. Comprueba que la decision sigue existiendo.
-5. Abre el detalle y cambia `selectedOption`.
-6. Recarga y confirma que el cambio persiste.
-7. Si quieres validar la API directamente, prueba:
+### 1. El proyecto no era de una sola pieza
 
-```bash
-curl https://<backend-project>.vercel.app/health
-curl https://<backend-project>.vercel.app/api/decisions
-```
+Uno de los errores mas faciles de cometer en Vercel es asumir que basta con desplegar la raiz del repositorio. En este caso no era asi: hacia falta separar cliente y servidor.
 
-## Archivos relevantes
+### 2. El backend necesitaba una entrada explicita
+
+Para evitar ambiguedades en Vercel fue necesario asegurar una entrada valida en `server/index.ts`.
+
+### 3. No se debian versionar artefactos generados
+
+Se detecto que el repositorio habia llegado a contener `node_modules/` y `dist/`, algo especialmente problematica al desplegar desde Linux en Vercel. El repositorio se limpio y se dejo de versionar ese contenido.
+
+### 4. La API base debia definirse en produccion
+
+Aunque el frontend tiene un valor por defecto para desarrollo local, en produccion necesita apuntar de forma explicita al backend desplegado.
+
+## Recomendaciones finales
+
+- desplegar primero el backend y verificarlo
+- desplegar despues el frontend con la variable `VITE_API_BASE_URL`
+- no versionar `node_modules`, `dist` ni otros artefactos generados
+- si Vercel mantiene un estado de build antiguo, relanzar el despliegue sin usar cache
+
+## Archivos implicados
 
 - `vercel.json`
+- `package.json`
+- `scripts/dev-all.mjs`
+- `src/api/client.ts`
+- `server/index.ts`
 - `server/src/app.ts`
 - `server/src/repositories/createDecisionRepository.ts`
 - `server/src/repositories/FileDecisionRepository.ts`
 - `server/src/repositories/BlobDecisionRepository.ts`
-- `src/api/client.ts`
-
-## Estado desde este entorno
-
-El repositorio quedo preparado para despliegue, pero la publicacion real no se pudo completar aqui porque el CLI no pudo autenticarse/salir a red desde este entorno. Por eso las URLs de produccion quedaron documentadas como plantillas.

@@ -1,329 +1,103 @@
-# Formularios e Interacción
+# Formularios e interaccion
 
-Documentación sobre la implementación de formularios controlados en React.
+El formulario principal de DecideYa vive en la pagina `src/pages/Decisions.tsx`. No se trata de un formulario aislado, sino de una pequena herramienta de composicion que permite construir una decision antes de guardarla.
 
-## Formularios Controlados
+## Objetivo del formulario
 
-Un formulario controlado en React es aquel cuyos elementos de entrada (inputs) tienen su estado vinculado directamente al estado del componente mediante handlers de cambio.
+El flujo de creacion se diseno para que el usuario pueda:
 
-### Ejemplo Básico: Crear Decisión
+- escribir un titulo
+- introducir varias opciones rapidamente
+- revisar un borrador antes de guardar
+- seleccionar manualmente una opcion si lo desea
+- probar una ruleta con el borrador antes de persistirlo
 
-```tsx
-// filepath: src/components/CreateDecisionForm.tsx
-import { useState } from 'react';
-import { Button } from './Button';
+## Estructura del estado local
 
-interface CreateDecisionFormProps {
-  onSubmit: (title: string, options: string[]) => void;
-}
+Antes de enviar datos al backend, el formulario trabaja con un estado local de borrador:
 
-export const CreateDecisionForm = ({ onSubmit }: CreateDecisionFormProps) => {
-  const [title, setTitle] = useState('');
-  const [options, setOptions] = useState<string[]>(['', '']);
-  const [errors, setErrors] = useState<Record<string, string>>({});
+- `title`
+- `optionInput`
+- `draftOptions`
+- `draftSelectedOption`
+- `isSubmitting`
 
-  // Handler para cambiar el título
-  const handleTitleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setTitle(e.target.value);
-    // Limpiar error cuando el usuario escribe
-    if (errors.title) {
-      setErrors(prev => ({ ...prev, title: '' }));
-    }
-  };
+Esta separacion permite que el usuario experimente con el contenido sin modificar todavia el estado global de la aplicacion.
 
-  // Handler para cambiar una opción específica
-  const handleOptionChange = (index: number, value: string) => {
-    const newOptions = [...options];
-    newOptions[index] = value;
-    setOptions(newOptions);
-    
-    // Limpiar error de opciones
-    if (errors.options) {
-      setErrors(prev => ({ ...prev, options: '' }));
-    }
-  };
+## Entrada de opciones
 
-  // Agregar nueva opción
-  const addOption = () => {
-    if (options.length < 6) {
-      setOptions([...options, '']);
-    }
-  };
+Una de las decisiones mas utiles del formulario fue permitir introducir opciones de forma flexible.
 
-  // Eliminar opción
-  const removeOption = (index: number) => {
-    if (options.length > 2) {
-      setOptions(options.filter((_, i) => i !== index));
-    }
-  };
+La funcion `parseOptions()` acepta:
 
-  // Validación básica
-  const validate = (): boolean => {
-    const newErrors: Record<string, string> = {};
+- texto separado por comas
+- texto separado por saltos de linea
 
-    if (!title.trim()) {
-      newErrors.title = 'El título es requerido';
-    } else if (title.length < 3) {
-      newErrors.title = 'El título debe tener al menos 3 caracteres';
-    }
+De esta forma, el usuario puede pegar varias opciones de una sola vez sin tener que rellenar campos individuales.
 
-    const validOptions = options.filter(opt => opt.trim());
-    if (validOptions.length < 2) {
-      newErrors.options = 'Se requieren al menos 2 opciones';
-    }
+## Reglas del borrador
 
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
+El formulario aplica reglas locales antes de permitir el envio:
 
-  // Submit del formulario
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (validate()) {
-      const validOptions = options.filter(opt => opt.trim());
-      onSubmit(title.trim(), validOptions);
-      
-      // Reset del formulario
-      setTitle('');
-      setOptions(['', '']);
-      setErrors({});
-    }
-  };
+- el titulo debe tener al menos 3 caracteres utiles
+- el borrador debe contener entre 2 y 6 opciones
+- las opciones vacias se descartan
+- no se anaden duplicados, comparando en minusculas
 
-  return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      {/* Campo Título */}
-      <div>
-        <label htmlFor="title" className="block text-sm font-medium mb-1">
-          Título de la decisión
-        </label>
-        <input
-          id="title"
-          type="text"
-          value={title}
-          onChange={handleTitleChange}
-          placeholder="¿Qué decisión necesitas tomar?"
-          className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
-        />
-        {errors.title && (
-          <p className="text-red-500 text-sm mt-1">{errors.title}</p>
-        )}
-      </div>
+Estas reglas mejoran la experiencia de usuario, aunque la validacion definitiva sigue estando en el backend.
 
-      {/* Opciones */}
-      <div>
-        <label className="block text-sm font-medium mb-2">
-          Opciones
-        </label>
-        {options.map((option, index) => (
-          <div key={index} className="flex gap-2 mb-2">
-            <input
-              type="text"
-              value={option}
-              onChange={(e) => handleOptionChange(index, e.target.value)}
-              placeholder={`Opción ${index + 1}`}
-              className="flex-1 px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
-            />
-            {options.length > 2 && (
-              <button
-                type="button"
-                onClick={() => removeOption(index)}
-                className="px-2 text-red-500 hover:text-red-700"
-              >
-                ✕
-              </button>
-            )}
-          </div>
-        ))}
-        
-        {errors.options && (
-          <p className="text-red-500 text-sm mt-1">{errors.options}</p>
-        )}
-        
-        {options.length < 6 && (
-          <button
-            type="button"
-            onClick={addOption}
-            className="text-blue-600 hover:text-blue-700 text-sm"
-          >
-            + Agregar opción
-          </button>
-        )}
-      </div>
+## Seleccion manual previa
 
-      {/* Botón de envío */}
-      <Button
-        label="Crear Decisión"
-        type="submit"
-        variant="primary"
-      />
-    </form>
-  );
-};
-```
+Antes de guardar, el usuario puede marcar una opcion como elegida. Esa seleccion se guarda en `draftSelectedOption` y, si finalmente se envia el formulario, pasa al backend como parte del `CreateDecisionDTO`.
 
-## Gestión de Estado de Inputs
+Si una opcion se elimina del borrador y era la seleccionada, el estado se corrige automaticamente para no dejar una referencia invalida.
 
-### useState para Campos Simples
+## Flujo de envio
 
-```tsx
-const [inputValue, setInputValue] = useState('');
-```
+Cuando el formulario se envia:
 
-### useState para Múltiples Campos
+1. Se comprueba que el borrador cumple las reglas minimas.
+2. Se activa `isSubmitting`.
+3. Se llama a `addDecision()` a traves del contexto.
+4. Si la creacion va bien, el formulario se limpia.
+5. Si falla, el error se gestiona desde el store global.
 
-```tsx
-const [formData, setFormData] = useState({
-  title: '',
-  description: '',
-  category: 'general'
-});
+Este enfoque evita duplicar la logica de errores dentro del propio formulario.
 
-// Handler genérico para múltiples campos
-const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
-  const { name, value } = e.target;
-  setFormData(prev => ({ ...prev, [name]: value }));
-};
-```
+## Feedback al usuario
 
-## Validación de Campos
+El formulario da informacion en varios niveles:
 
-### Reglas de Validación Comunes
+- pistas cortas bajo los campos
+- desactivacion de botones cuando una accion no es valida
+- mensajes de estado global si falla la red
+- cambio de texto en botones durante acciones asincronas
 
-| Campo | Reglas |
-|-------|--------|
-| Título | Requerido, min 3 caracteres, max 100 |
-| Opciones | Mínimo 2, máximo 6, no vacías |
-| Email | Formato válido de email |
-| Fecha | No anterior a hoy |
+No se opto por una validacion agresiva campo a campo. En su lugar, se busco un equilibrio entre guia visual y sencillez de uso.
 
-### Función de Validación
+## Relacion con la API
 
-```tsx
-interface ValidationRules {
-  required?: boolean;
-  minLength?: number;
-  maxLength?: number;
-  pattern?: RegExp;
-  custom?: (value: string) => boolean;
-}
+El formulario no habla directamente con la API. Toda la comunicacion pasa por el contexto y por `useDecisions()`. Esto aporta varias ventajas:
 
-const validateField = (value: string, rules: ValidationRules): string => {
-  if (rules.required && !value.trim()) {
-    return 'Este campo es requerido';
-  }
-  if (rules.minLength && value.length < rules.minLength) {
-    return `Mínimo ${rules.minLength} caracteres`;
-  }
-  if (rules.maxLength && value.length > rules.maxLength) {
-    return `Máximo ${rules.maxLength} caracteres`;
-  }
-  if (rules.pattern && !rules.pattern.test(value)) {
-    return 'Formato inválido';
-  }
-  if (rules.custom && !rules.custom(value)) {
-    return 'Valor no válido';
-  }
-  return '';
-};
-```
+- mantiene el componente centrado en la experiencia de usuario
+- evita repetir logica HTTP
+- garantiza que la creacion siga el mismo flujo que el resto de mutaciones
 
-## Mensajes de Error y Confirmación
+## Coherencia con el backend
 
-### Mostrar Errores
+Las reglas del formulario estan pensadas para coincidir con la API:
 
-```tsx
-// Errors inline junto al campo
-{errors.fieldName && (
-  <p className="text-red-500 text-sm">{errors.fieldName}</p>
-)}
+- minimo 2 opciones
+- maximo 6
+- titulo valido
+- `selectedOption` opcional
 
-// Errors generales arriba del formulario
-{Object.keys(errors).length > 0 && (
-  <div className="bg-red-50 border border-red-200 rounded p-3">
-    <p className="text-red-700 font-medium">Por favor corrige los siguientes errores:</p>
-    <ul className="list-disc list-inside text-red-600">
-      {Object.values(errors).map((error, i) => (
-        <li key={i}>{error}</li>
-      ))}
-    </ul>
-  </div>
-)}
-```
+Aun asi, la comprobacion definitiva esta en el backend, que sigue siendo la autoridad final sobre la validez de los datos.
 
-### Mensajes de Confirmación
+## Interaccion complementaria: ruleta del borrador
 
-```tsx
-const [successMessage, setSuccessMessage] = useState('');
+Un detalle diferencial del formulario es que el borrador se puede probar con la ruleta antes de guardar. Esto convierte el formulario en algo mas que una capa de entrada de datos: tambien permite explorar el contenido que se esta creando.
 
-const handleSubmit = () => {
-  // Lógica de submit...
-  setSuccessMessage('¡Decisión creada exitosamente!');
-  
-  // Auto-ocultar después de 3 segundos
-  setTimeout(() => setSuccessMessage(''), 3000);
-};
+## Conclusion
 
-// En el JSX:
-{successMessage && (
-  <div className="bg-green-50 border border-green-200 rounded p-3 text-green-700">
-    {successMessage}
-  </div>
-)}
-```
-
-## Patrón de Formulario Reutilizable
-
-```tsx
-// filepath: src/components/FormField.tsx
-interface FormFieldProps {
-  label: string;
-  name: string;
-  type?: string;
-  value: string;
-  onChange: (value: string) => void;
-  error?: string;
-  placeholder?: string;
-  required?: boolean;
-}
-
-export const FormField = ({
-  label,
-  name,
-  type = 'text',
-  value,
-  onChange,
-  error,
-  placeholder,
-  required
-}: FormFieldProps) => {
-  return (
-    <div className="mb-4">
-      <label htmlFor={name} className="block text-sm font-medium mb-1">
-        {label} {required && <span className="text-red-500">*</span>}
-      </label>
-      <input
-        id={name}
-        type={type}
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        placeholder={placeholder}
-        className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500
-          ${error ? 'border-red-500' : 'border-gray-300'}`}
-      />
-      {error && <p className="text-red-500 text-sm mt-1">{error}</p>}
-    </div>
-  );
-};
-```
-
-## Mejores Prácticas
-
-1. **Usar estado controlado** — Todos los inputs deben estar vinculados al estado
-2. **Validar en tiempo real** — Mostrar errores mientras el usuario escribe
-3. **Validar al submit** — Validación final antes de enviar datos
-4. **Limpiar errores al editar** — Cuando el usuario corrige, quitar el mensaje de error
-5. **Feedback claro** — Mensajes de error específicos y accionables
-6. **Accesibilidad** — Usar labels asociados a los inputs mediante `htmlFor`
-7. **Manejar edge cases** — Campos vacíos, valores por defecto, reset del formulario
+La solucion final no se basa en un formulario complejo con muchos campos, sino en un flujo compacto y muy orientado a la accion. La prioridad fue que crear una decision resultara rapido, claro y facil de revisar antes de persistirla.

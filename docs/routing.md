@@ -1,32 +1,61 @@
-# Estructura de Rutas
+# Estructura de rutas
 
-## Objetivo
+La aplicacion utiliza `react-router-dom` para organizar la navegacion entre la vista principal, el detalle de una decision y las rutas de error.
 
-La aplicacion usa React Router para separar la experiencia en paginas claras y navegables sin recargar el navegador.
+## Objetivo del enrutado
 
-## Rutas principales
+La idea no fue crear una estructura compleja, sino una navegacion clara y facil de mantener. La aplicacion tiene pocas pantallas, pero cada una responde a una responsabilidad concreta.
 
-| Ruta | Componente | Responsabilidad |
+## Rutas actuales
+
+| Ruta | Componente | Funcion |
 | --- | --- | --- |
-| `/` | `Home` | Portada, resumen general y accesos rapidos. |
-| `/decisions` | `Decisions` | Alta, listado y eliminacion de decisiones. |
-| `/decisions/:decisionId` | `DecisionDetail` | Vista de detalle para una decision concreta. |
-| `/about` | `About` | Contexto funcional y tecnico de la app. |
-| `*` | `NotFound` | Manejo de rutas inexistentes mediante pagina 404. |
+| `/` | `Decisions` | Pantalla principal con formulario, listado y ruleta de borrador |
+| `/decisions` | `Decisions` | Alias de la pantalla principal |
+| `/decisions/:decisionId` | `DecisionDetail` | Vista de detalle de una decision |
+| `/about` | `Navigate` | Redireccion a `/` |
+| `*` | `NotFound` | Manejo de rutas inexistentes |
 
 ## Layout comun
 
-- `AppLayout` envuelve todas las rutas.
-- La cabecera contiene enlaces a `Inicio`, `Decisiones` y `Acerca de`.
-- El contenido de cada pagina se renderiza mediante `Outlet`.
+Todas las rutas principales cuelgan de `AppLayout`, que se encarga de:
 
-## Navegacion
+- renderizar la cabecera comun
+- mostrar metricas globales
+- reflejar el estado general de la red
+- insertar el contenido de cada pagina mediante `Outlet`
 
-- La navegacion principal se implementa con `NavLink` para resaltar la ruta activa.
-- Desde la lista de decisiones se puede abrir `/decisions/:decisionId` con el enlace `Ver detalles`.
-- La pagina 404 ofrece accesos de retorno a `/` y `/decisions`.
+Esto evita repetir estructura y mantiene una experiencia visual consistente.
+
+## Pagina principal
+
+La ruta `/` ya no funciona como una portada separada. Hoy actua como punto de entrada real de la aplicacion y renderiza directamente `Decisions`.
+
+Esa decision simplifica la navegacion:
+
+- el usuario entra y ya puede crear una decision
+- el listado de contenido esta disponible desde el inicio
+- no existe una pantalla intermedia vacia
+
+## Ruta de detalle
+
+`/decisions/:decisionId` abre una decision concreta.
+
+En esta pantalla el usuario puede:
+
+- consultar la decision completa
+- marcar o quitar una opcion elegida
+- lanzar la ruleta
+- eliminar la decision
+
+Si el identificador no existe, la aplicacion reutiliza `NotFound` con un mensaje adaptado al caso.
+
+## Rutas no utilizadas de forma funcional
+
+La ruta `/about` no muestra actualmente una pagina propia. Se mantiene como redireccion a `/`, probablemente como resto de una fase anterior del proyecto o como posible punto de extension futuro.
 
 ## Manejo de errores de ruta
 
-- Cualquier URL no reconocida cae en la ruta comodin `*`.
-- Si se intenta abrir una decision eliminada o inexistente, la app reutiliza la vista `NotFound` con un mensaje especifico.
+La ruta comodin `*` envia al usuario a `NotFound`. Esta pantalla se usa tanto para URLs inexistentes como para decisiones que ya no estan disponibles.
+
+Con ello se consigue una estrategia de error coherente y facil de entender.

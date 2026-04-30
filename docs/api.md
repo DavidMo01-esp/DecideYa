@@ -1,290 +1,287 @@
-# API de DecideYa!
+# API de DecideYa
 
-Documentación de los endpoints REST del backend.
+Esta documentacion describe la API REST que utiliza el frontend para leer y modificar decisiones. La API esta implementada en Express y sigue una estructura sencilla: rutas, controlador, servicio y repositorio.
 
 ## Base URL
 
-```
+En desarrollo local:
+
+```text
 http://localhost:3001/api
 ```
 
-## Endpoints
+En produccion, la base URL depende del proyecto backend desplegado en Vercel:
 
-### Decisiones
+```text
+https://<backend-project>.vercel.app/api
+```
 
-| Método | Endpoint | Descripción |
-|--------|----------|-------------|
-| GET | `/decisions` | Listar todas las decisiones |
-| GET | `/decisions/:id` | Obtener una decisión por ID |
-| POST | `/decisions` | Crear una nueva decisión |
-| PUT | `/decisions/:id` | Actualizar una decisión |
-| DELETE | `/decisions/:id` | Eliminar una decisión |
+El endpoint de salud se expone fuera de `/api`:
 
----
+```text
+http://localhost:3001/health
+https://<backend-project>.vercel.app/health
+```
+
+## Recurso principal: Decision
+
+La API trabaja con un unico recurso funcional:
+
+```json
+{
+  "id": "550e8400-e29b-41d4-a716-446655440000",
+  "title": "Que hacemos este fin de semana",
+  "options": ["Cine", "Senderismo", "Cena fuera"],
+  "selectedOption": "Cine",
+  "createdAt": "2026-04-30T08:15:00.000Z",
+  "updatedAt": "2026-04-30T08:20:00.000Z"
+}
+```
+
+### Campos
+
+- `id`: identificador unico
+- `title`: titulo de la decision
+- `options`: lista de opciones disponibles
+- `selectedOption`: opcion elegida manualmente o `null`
+- `createdAt`: fecha de creacion en formato ISO
+- `updatedAt`: fecha de ultima actualizacion en formato ISO
+
+## Endpoints disponibles
+
+| Metodo | Ruta | Descripcion |
+| --- | --- | --- |
+| GET | `/decisions` | Lista todas las decisiones |
+| GET | `/decisions/:id` | Devuelve una decision concreta |
+| POST | `/decisions` | Crea una nueva decision |
+| PUT | `/decisions/:id` | Actualiza una decision existente |
+| DELETE | `/decisions/:id` | Elimina una decision |
+| GET | `/health` | Comprueba que el backend esta activo |
 
 ## GET /decisions
 
-Listar todas las decisiones.
+Devuelve la coleccion completa de decisiones.
 
-### Request
+### Ejemplo de peticion
 
 ```bash
-GET http://localhost:3001/api/decisions
+curl http://localhost:3001/api/decisions
 ```
 
-### Response
+### Respuesta correcta
 
 ```json
 [
   {
     "id": "550e8400-e29b-41d4-a716-446655440000",
-    "title": "¿Qué restaurante elegir?",
-    "options": ["Italiano", "Mexicano", "Japonés"],
-    "createdAt": "2024-01-15T10:30:00.000Z",
-    "updatedAt": "2024-01-15T10:30:00.000Z"
-  },
-  {
-    "id": "550e8400-e29b-41d4-a716-446655440001",
-    "title": "¿Qué película ver?",
-    "options": ["Acción", "Comedia", "Drama"],
-    "createdAt": "2024-01-14T15:20:00.000Z",
-    "updatedAt": "2024-01-14T15:20:00.000Z"
+    "title": "Que hacemos este fin de semana",
+    "options": ["Cine", "Senderismo", "Cena fuera"],
+    "selectedOption": null,
+    "createdAt": "2026-04-30T08:15:00.000Z",
+    "updatedAt": "2026-04-30T08:15:00.000Z"
   }
 ]
 ```
 
-### Códigos de Respuesta
+### Codigo esperado
 
-| Código | Descripción |
-|--------|-------------|
-| 200 | OK - Lista de decisiones |
-
----
+- `200 OK`
 
 ## GET /decisions/:id
 
-Obtener una decisión por su ID.
+Devuelve una unica decision a partir de su identificador.
 
-### Request
+### Ejemplo de peticion
 
 ```bash
-GET http://localhost:3001/api/decisions/550e8400-e29b-41d4-a716-446655440000
+curl http://localhost:3001/api/decisions/550e8400-e29b-41d4-a716-446655440000
 ```
 
-### Response (200)
+### Respuesta correcta
 
 ```json
 {
   "id": "550e8400-e29b-41d4-a716-446655440000",
-  "title": "¿Qué restaurante elegir?",
-  "options": ["Italiano", "Mexicano", "Japonés"],
-  "createdAt": "2024-01-15T10:30:00.000Z",
-  "updatedAt": "2024-01-15T10:30:00.000Z"
+  "title": "Que hacemos este fin de semana",
+  "options": ["Cine", "Senderismo", "Cena fuera"],
+  "selectedOption": null,
+  "createdAt": "2026-04-30T08:15:00.000Z",
+  "updatedAt": "2026-04-30T08:15:00.000Z"
 }
 ```
 
-### Response (404)
+### Error posible
 
 ```json
 {
-  "error": "Decisión no encontrada"
+  "error": "Decision no encontrada"
 }
 ```
 
-### Códigos de Respuesta
+### Codigos esperados
 
-| Código | Descripción |
-|--------|-------------|
-| 200 | OK - Decisión encontrada |
-| 404 | Not Found - La decisión no existe |
-
----
+- `200 OK`
+- `404 Not Found`
 
 ## POST /decisions
 
-Crear una nueva decisión.
+Crea una nueva decision.
 
-### Request
-
-```bash
-POST http://localhost:3001/api/decisions
-Content-Type: application/json
-
-{
-  "title": "¿Qué restaurante elegir?",
-  "options": ["Italiano", "Mexicano", "Japonés"]
-}
-```
-
-### Response (201)
+### Cuerpo esperado
 
 ```json
 {
-  "id": "550e8400-e29b-41d4-a716-446655440000",
-  "title": "¿Qué restaurante elegir?",
-  "options": ["Italiano", "Mexicano", "Japonés"],
-  "createdAt": "2024-01-15T10:30:00.000Z",
-  "updatedAt": "2024-01-15T10:30:00.000Z"
+  "title": "Que cenamos hoy",
+  "options": ["Pizza", "Pasta", "Ensalada"],
+  "selectedOption": "Pizza"
 }
 ```
 
-### Response (400) - Errores de Validación
+`selectedOption` es opcional. Si no se envia, el backend almacena `null`.
+
+### Respuesta correcta
+
+```json
+{
+  "id": "550e8400-e29b-41d4-a716-446655440001",
+  "title": "Que cenamos hoy",
+  "options": ["Pizza", "Pasta", "Ensalada"],
+  "selectedOption": "Pizza",
+  "createdAt": "2026-04-30T09:00:00.000Z",
+  "updatedAt": "2026-04-30T09:00:00.000Z"
+}
+```
+
+### Error de validacion
 
 ```json
 {
   "errors": [
-    { "field": "title", "message": "El título es requerido" },
+    { "field": "title", "message": "El titulo es requerido" },
     { "field": "options", "message": "Se requieren al menos 2 opciones" }
   ]
 }
 ```
 
-### Códigos de Respuesta
+### Codigos esperados
 
-| Código | Descripción |
-|--------|-------------|
-| 201 | Created - Decisión creada |
-| 400 | Bad Request - Datos inválidos |
-
-### Reglas de Validación
-
-| Campo | Requerido | Reglas |
-|-------|-----------|--------|
-| title | Sí | 3-100 caracteres |
-| options | Sí | Array de 2-6 elementos, no vacíos |
-
----
+- `201 Created`
+- `400 Bad Request`
 
 ## PUT /decisions/:id
 
-Actualizar una decisión existente.
+Actualiza uno o varios campos de una decision existente.
 
-### Request
+### Cuerpo de ejemplo
 
-```bash
-PUT http://localhost:3001/api/decisions/550e8400-e29b-41d4-a716-446655440000
-Content-Type: application/json
-
+```json
 {
-  "title": "¿Qué restaurante ir hoy?"
+  "selectedOption": "Senderismo"
 }
 ```
 
-### Response (200)
+Tambien se puede actualizar el titulo, la lista de opciones o varias propiedades a la vez.
+
+### Respuesta correcta
 
 ```json
 {
   "id": "550e8400-e29b-41d4-a716-446655440000",
-  "title": "¿Qué restaurante ir hoy?",
-  "options": ["Italiano", "Mexicano", "Japonés"],
-  "createdAt": "2024-01-15T10:30:00.000Z",
-  "updatedAt": "2024-01-15T11:45:00.000Z"
+  "title": "Que hacemos este fin de semana",
+  "options": ["Cine", "Senderismo", "Cena fuera"],
+  "selectedOption": "Senderismo",
+  "createdAt": "2026-04-30T08:15:00.000Z",
+  "updatedAt": "2026-04-30T09:10:00.000Z"
 }
 ```
 
-### Response (400) - Errores de Validación
+### Errores posibles
 
 ```json
 {
   "errors": [
-    { "field": "title", "message": "El título debe tener al menos 3 caracteres" }
+    { "field": "body", "message": "Debe proporcionar al menos un campo para actualizar" }
   ]
 }
 ```
 
-### Response (404)
-
 ```json
 {
-  "error": "Decisión no encontrada"
+  "error": "Decision no encontrada"
 }
 ```
 
-### Códigos de Respuesta
+### Nota de comportamiento
 
-| Código | Descripción |
-|--------|-------------|
-| 200 | OK - Decisión actualizada |
-| 400 | Bad Request - Datos inválidos |
-| 404 | Not Found - La decisión no existe |
+Si se actualiza la lista de opciones y la opcion elegida deja de existir en el resultado final, el backend guarda `selectedOption` como `null`. Esto evita que la decision quede en un estado incoherente.
 
----
+### Codigos esperados
+
+- `200 OK`
+- `400 Bad Request`
+- `404 Not Found`
 
 ## DELETE /decisions/:id
 
-Eliminar una decisión.
+Elimina una decision existente.
 
-### Request
-
-```bash
-DELETE http://localhost:3001/api/decisions/550e8400-e29b-41d4-a716-446655440000
-```
-
-### Response (204)
-
-```
-No content - Eliminación exitosa
-```
-
-### Response (404)
-
-```json
-{
-  "error": "Decisión no encontrada"
-}
-```
-
-### Códigos de Respuesta
-
-| Código | Descripción |
-|--------|-------------|
-| 204 | No Content - Decisión eliminada |
-| 404 | Not Found - La decisión no existe |
-
----
-
-## Health Check
-
-### GET /health
-
-Verificar que el servidor está funcionando.
-
-### Request
+### Ejemplo de peticion
 
 ```bash
-GET http://localhost:3001/health
+curl -X DELETE http://localhost:3001/api/decisions/550e8400-e29b-41d4-a716-446655440000
 ```
 
-### Response (200)
+### Respuesta correcta
+
+No devuelve cuerpo.
+
+### Codigos esperados
+
+- `204 No Content`
+- `404 Not Found`
+
+## GET /health
+
+Sirve para comprobar que el backend esta funcionando.
+
+### Respuesta correcta
 
 ```json
 {
   "status": "ok",
-  "timestamp": "2024-01-15T10:30:00.000Z"
+  "timestamp": "2026-04-30T09:15:00.000Z"
 }
 ```
 
----
+### Codigo esperado
 
-## Códigos HTTP Resumen
+- `200 OK`
 
-| Código | Significado |
-|--------|-------------|
-| 200 | OK |
-| 201 | Created |
-| 204 | No Content |
-| 400 | Bad Request |
-| 404 | Not Found |
-| 500 | Internal Server Error |
+## Reglas de validacion
 
----
+La API valida los datos antes de delegar en el servicio:
 
-## Iniciar el Servidor
+### En creacion
 
-```bash
-cd server
-npm install
-npm run dev
-```
+- `title` es obligatorio
+- `title` debe tener entre 3 y 100 caracteres
+- `options` es obligatorio
+- `options` debe contener entre 2 y 6 elementos
+- cada opcion debe ser una cadena no vacia
+- `selectedOption`, si se envia, debe ser `null` o una cadena incluida en `options`
 
-El servidor correrá en `http://localhost:3001`
+### En actualizacion
+
+- debe enviarse al menos un campo
+- `title`, si aparece, debe cumplir las mismas reglas que en creacion
+- `options`, si aparece, debe seguir teniendo entre 2 y 6 elementos validos
+- `selectedOption`, si aparece, debe ser `null` o una cadena
+
+## Persistencia
+
+La API puede trabajar con dos estrategias de almacenamiento:
+
+- en local: archivo JSON en `server/data/db.json`
+- en Vercel: `Vercel Blob`
+
+La eleccion depende de las variables de entorno del backend.

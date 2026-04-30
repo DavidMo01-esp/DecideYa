@@ -1,25 +1,52 @@
-##DIFERENCIAS SCRUM Y KANBAN.
+# Enfoque agil del proyecto
 
-Tanto Scrum como Kanban son metodologías englobadas dentro de Agile, cuyo objetivo principal es mejorar la eficiencia y la entrega de valor en los equipos. Las diferencias principales son:
+Este proyecto se gestiono con una logica agil sencilla y pragmatica. El objetivo no fue seguir un marco de trabajo de forma rigida, sino mantener un flujo constante de avance, validar decisiones tecnicas con frecuencia y corregir el rumbo cuando aparecian nuevos problemas.
 
-    -Scrum: Es un marco de trabajo prescriptivo. Se basa en romper el proyecto en bloques de tiempo llamados Sprints.
+## Scrum y Kanban: diferencias utiles
 
-    Cómo funciona: El equipo se compromete a entregar un conjunto específico de tareas al final de cada Sprint.
+Scrum y Kanban comparten una misma base: trabajar de forma incremental y revisar el progreso con frecuencia. Aun asi, responden a necesidades distintas.
 
-    Eventos clave: Sprint Planning, Daily Scrum, Sprint Review y Retrospective.
+### Scrum
 
-    Ideal para: Proyectos donde se requiere una planificación estructurada, plazos claros y entregas incrementales predecibles.
+Scrum organiza el trabajo en iteraciones cerradas, normalmente llamadas sprints. Durante cada sprint se define un conjunto de tareas y se intenta proteger ese compromiso hasta la siguiente revision.
 
-    -Kanban: Es un método más visual y flexible. Se basa en la gestión de un flujo de trabajo constante sin la presión de ciclos temporales rígidos.
+Suele funcionar bien cuando:
 
-    Cómo funciona: Se visualiza el trabajo en un tablero (Tablero Kanban). El enfoque principal es limitar el trabajo en curso (WIP) para evitar cuellos de botella.
+- el alcance del ciclo esta razonablemente claro
+- el equipo necesita una cadencia fija de entrega
+- interesa trabajar con rituales definidos, como planificacion, revision y retrospectiva
 
-    Enfoque: Se basa en "tirar" (pull) de nuevas tareas solo cuando hay capacidad disponible en el sistema.
+### Kanban
 
-    Ideal para: Entornos de mantenimiento, soporte técnico, o equipos que enfrentan prioridades cambiantes de forma constante.
+Kanban parte de una idea mas visual y flexible. El trabajo se organiza en columnas y se mueve segun su estado real: pendiente, en curso, en revision o terminado. No obliga a trabajar por bloques de tiempo cerrados.
 
-##Cuándo usar cada una: 
+Suele funcionar mejor cuando:
 
-    - Elige Scrum si: Tu equipo necesita una estructura clara, los roles bien definidos ayudan a tu organización y los objetivos del proyecto requieren entregas frecuentes y revisables al final de cada iteración.
+- aparecen bloqueos tecnicos imprevistos
+- las prioridades cambian con frecuencia
+- el proyecto combina trabajo funcional, correccion de errores y tareas de integracion
 
-    - Elige Kanban si: Tu equipo recibe tareas de forma aleatoria, los cambios de prioridad son muy comunes, o si ya tienes un proceso de trabajo que solo necesita ser optimizado visualmente para encontrar ineficiencias.
+## Por que Kanban encajaba mejor aqui
+
+En DecideYa habia una secuencia logica de fases, pero no un camino totalmente lineal. A medida que el proyecto avanzaba surgieron ajustes en varios frentes:
+
+- cambios en la forma de persistir los datos
+- evolucion de la capa de red del frontend
+- adaptacion del backend para produccion
+- problemas de despliegue y configuracion en Vercel
+- necesidad de revisar y actualizar la documentacion
+
+Ese tipo de trabajo encaja mejor con Kanban que con un sprint cerrado. Permitio priorizar lo que realmente bloqueaba el avance en cada momento y mover el foco con rapidez sin romper una planificacion artificial.
+
+## Aplicacion practica en el proyecto
+
+El trabajo se organizo como un flujo de entregas pequenas:
+
+1. Definicion de la idea y del alcance funcional.
+2. Construccion de la interfaz base.
+3. Implementacion del backend y de la API REST.
+4. Integracion entre frontend y backend.
+5. Ajustes de persistencia y despliegue.
+6. Revision y cierre documental.
+
+El resultado fue una forma de trabajo sencilla, pero muy util para mantener claridad tecnica sin perder flexibilidad.

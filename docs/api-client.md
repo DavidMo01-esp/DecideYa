@@ -1,8 +1,17 @@
 # Capa de red del frontend
 
-Este proyecto usa la API REST del backend como unica fuente de verdad para las decisiones. El frontend ya no persiste decisiones en `localStorage`: la UI lee y escribe siempre contra `http://localhost:3001/api` o el valor definido en `VITE_API_BASE_URL`.
+La capa de red del frontend se diseno para que los componentes de React no dependan directamente de `fetch` ni de detalles HTTP. La idea central fue clara desde el inicio: la interfaz debia consumir la API como unica fuente de verdad y tratar la comunicacion con el backend como una responsabilidad separada.
 
-## Estructura
+## Objetivo
+
+La capa de red resuelve cuatro necesidades:
+
+- centralizar la URL base de la API
+- encapsular las peticiones HTTP
+- tipar respuestas y errores con TypeScript
+- ofrecer una interfaz sencilla al resto de la aplicacion
+
+## Estructura actual
 
 ```text
 src/
@@ -16,39 +25,46 @@ src/
     api.ts
 ```
 
+Cada una de estas piezas cumple una funcion concreta:
+
+- `client.ts` conoce HTTP y la forma de las respuestas.
+- `useDecisions.ts` orquesta la carga y las mutaciones.
+- `DecisionContext.tsx` comparte el estado con toda la UI.
+- `src/types/api.ts` define el contrato que consume el cliente.
+
+## URL base y entornos
+
+La URL base de la API se resuelve asi:
+
+- en local, el valor por defecto es `http://localhost:3001/api`
+- en otros entornos, se puede sobreescribir con `VITE_API_BASE_URL`
+
+Esto permite mantener el mismo frontend apuntando a un backend local, a un backend desplegado en Vercel o a cualquier otro entorno de pruebas.
+
 ## Cliente API tipado
 
-Archivo: `src/api/client.ts`
-
-Responsabilidades:
-
-- Resolver la URL base de la API desde `VITE_API_BASE_URL` o el fallback local.
-- Encapsular `fetch` en un helper `request<T>()`.
-- Devolver respuestas tipadas por endpoint.
-- Normalizar errores HTTP y de validacion en `ApiClientError`.
-
-Endpoints expuestos:
+`src/api/client.ts` expone una API pequena y predecible:
 
 ```ts
-apiClient.getDecisions(): Promise<Decision[]>
-apiClient.getDecision(id: string): Promise<Decision>
-apiClient.createDecision(data: CreateDecisionDTO): Promise<Decision>
-apiClient.updateDecision(id: string, data: UpdateDecisionDTO): Promise<Decision>
-apiClient.deleteDecision(id: string): Promise<void>
+apiClient.getDecisions()
+apiClient.getDecision(id)
+apiClient.createDecision(data)
+apiClient.updateDecision(id, data)
+apiClient.deleteDecision(id)
 ```
 
-El cliente tambien exporta:
+Detras de esas funciones hay una serie de decisiones tecnicas importantes:
 
-```ts
-API_BASE_URL: string
-getApiErrorMessage(error: unknown, fallbackMessage: string): string
-```
+- un helper `request<T>()` evita repetir configuracion de `fetch`
+- `handleResponse()` resuelve casos especiales como `204 No Content`
+- `parseJson()` evita fallos cuando la respuesta no trae cuerpo
+- los errores HTTP se transforman en una instancia de `ApiClientError`
+
+Con este enfoque, los componentes no necesitan saber si el error fue un `400`, un `404` o un problema de conexion: reciben un mensaje coherente y pueden reaccionar de forma uniforme.
 
 ## Contrato de tipos
 
-Archivo: `src/types/api.ts`
-
-Tipos alineados con `server/src/types/index.ts`:
+Los tipos principales son:
 
 ```ts
 interface Decision {
@@ -71,14 +87,9 @@ interface UpdateDecisionDTO {
   options?: string[];
   selectedOption?: string | null;
 }
-
-interface ValidationError {
-  field: string;
-  message: string;
-}
 ```
 
-Tipos de error del frontend:
+Tambien se tipan los errores:
 
 ```ts
 interface ApiErrorResponse {
@@ -88,14 +99,34 @@ interface ApiErrorResponse {
 interface ApiValidationErrorResponse {
   errors: ValidationError[];
 }
-
-class ApiClientError extends Error {
-  statusCode: number;
-  validationErrors: ValidationError[];
-}
 ```
 
-Estado de red compartido por la UI:
+Esto fue importante porque el backend no devuelve siempre la misma forma de error:
+
+- para validacion devuelve `errors[]`
+- para errores simples devuelve `error`
+
+El cliente abstrae esa diferencia y la convierte en un unico modelo de error para la UI.
+
+## Flujo de uso en la interfaz
+
+Los componentes no llaman directamente al cliente API. La secuencia real es esta:
+
+1. El usuario interactua con la UI.
+2. El componente invoca una accion del contexto.
+3. El contexto delega en `useDecisions()`.
+4. `useDecisions()` llama a `apiClient`.
+5. La respuesta del backend actualiza `decisions` y `networkState`.
+
+Este flujo deja bien separadas las responsabilidades:
+
+- los componentes renderizan
+- el hook coordina
+- el cliente API comunica
+
+## Estado de red compartido
+
+La UI trabaja con un estado compartido de red:
 
 ```ts
 type NetworkState<T> =
@@ -104,59 +135,19 @@ type NetworkState<T> =
   | { status: 'error'; message: string };
 ```
 
-## Flujo en la UI
+Ese modelo se refleja en varias pantallas:
 
-`useDecisions()` concentra la logica de red:
+- carga inicial con skeletons
+- actualizacion de datos visibles sin perder el contenido
+- mensajes claros cuando falla una peticion
+- accion de reintento mediante `refresh()`
 
-- carga inicial con `GET /decisions`
-- creacion con `POST /decisions`
-- borrado con `DELETE /decisions/:id`
-- actualizacion de `selectedOption` con `PUT /decisions/:id`
-- estado `loading | success | error` compartido
+## Decisiones de arquitectura
 
-`DecisionContext` solo expone ese store a los componentes:
+La capa de red no se limito a "hacer peticiones". Tambien definio una forma de pensar el frontend:
 
-```ts
-{
-  decisions,
-  networkState,
-  addDecision,
-  removeDecision,
-  setSelectedOption,
-  refresh
-}
-```
+- la fuente de verdad esta en el backend
+- el cliente solo mantiene un estado temporal en memoria
+- cada mutacion se apoya en la respuesta real del servidor
 
-## Estados de red renderizados
-
-La UI contempla los tres estados pedidos:
-
-- `loading`: skeletons iniciales y pill global de sincronizacion.
-- `success`: datos visibles desde `decisions`.
-- `error`: mensaje legible y accion de `retry` con `refresh()`.
-
-Pantallas principales:
-
-- `src/pages/Decisions.tsx`
-- `src/pages/DecisionDetail.tsx`
-- `src/components/AppLayout.tsx`
-
-## Fuente de verdad
-
-Las decisiones viven en el backend y el frontend mantiene solo un cache en memoria derivado de respuestas de la API.
-
-- No se usa `localStorage` para decisiones.
-- No hay seed local en el cliente.
-- Cada mutacion parte de la respuesta del backend.
-
-## Desarrollo local
-
-```bash
-npm run dev
-```
-
-Ese comando levanta frontend y backend juntos. Si necesitas apuntar a otra API:
-
-```bash
-VITE_API_BASE_URL=http://localhost:3001/api
-```
+Esa decision redujo bastante la complejidad de la interfaz y evito inconsistencias entre datos locales y datos persistidos.
