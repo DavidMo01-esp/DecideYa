@@ -11,6 +11,7 @@
     "dev:all": "node scripts/dev-all.mjs",
     "build": "vite build",
     "preview": "vite preview",
+    "typecheck:vercel": "tsc -p tsconfig.vercel.json",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
@@ -19,6 +20,7 @@
   "type": "module",
   "devDependencies": {
     "@tailwindcss/postcss": "^4.2.4",
+    "@types/node": "^25.6.0",
     "@types/react": "^19.2.2",
     "@types/react-dom": "^19.2.2",
     "autoprefixer": "^10.5.0",
@@ -28,6 +30,7 @@
     "vite": "^8.0.8"
   },
   "dependencies": {
+    "@vercel/blob": "^2.3.3",
     "react": "^19.2.5",
     "react-dom": "^19.2.5",
     "react-router-dom": "^7.14.1"
