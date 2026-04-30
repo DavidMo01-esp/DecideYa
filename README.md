@@ -40,6 +40,8 @@ BLOB_READ_WRITE_TOKEN=<token de Vercel Blob>
 
 `VITE_API_BASE_URL` es opcional y solo hace falta si quieres apuntar a una API externa.
 
+Si no defines `BLOB_READ_WRITE_TOKEN`, la API usa almacenamiento en memoria para evitar errores `500`, pero las decisiones no quedan persistidas entre reinicios o nuevas instancias.
+
 ## Verificacion rapida
 
 ```text

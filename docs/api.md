@@ -77,6 +77,8 @@ La API puede trabajar con dos estrategias:
 - en local: archivo JSON en `server/data/db.json`
 - en Vercel: `Vercel Blob`
 
+Si el despliegue de Vercel no tiene `BLOB_READ_WRITE_TOKEN`, la API cae a memoria para evitar errores de arranque. En ese caso los datos no son persistentes.
+
 La eleccion depende de las variables de entorno:
 
 ```text

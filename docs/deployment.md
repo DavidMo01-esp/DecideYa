@@ -39,6 +39,8 @@ server/data/db.json
 
 En Vercel, la API usa `Vercel Blob`.
 
+Si `BLOB_READ_WRITE_TOKEN` no existe, la API hace fallback a memoria para que el despliegue siga funcionando. Ese modo es util para demos, pero no garantiza persistencia.
+
 ## Variables de entorno necesarias
 
 ### Produccion en Vercel
