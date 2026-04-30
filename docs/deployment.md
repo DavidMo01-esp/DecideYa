@@ -1,5 +1,7 @@
 # Despliegue en Vercel
 
+Importante: este repo no funciona completo con un unico proyecto de Vercel creado en la raiz. Si haces eso, solo desplegaras el frontend. Para que la app funcione de verdad necesitas tambien el proyecto backend con `Root Directory = server`.
+
 Esta app se despliega como dos proyectos de Vercel dentro del mismo repositorio:
 
 - frontend: raiz del repo
@@ -23,6 +25,7 @@ Esta app se despliega como dos proyectos de Vercel dentro del mismo repositorio:
 ### Backend
 
 - Proyecto Vercel apuntando a `server`
+- Entrada detectada por Vercel en `server/index.ts`
 - Entrada Express exportable en `server/src/app.ts`
 - Persistencia en produccion con Vercel Blob
 - API publica bajo:

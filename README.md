@@ -28,4 +28,3 @@ Ese comando levanta:
 
 - `DECISIONS_STORAGE=blob`
 - `BLOB_READ_WRITE_TOKEN`
-
