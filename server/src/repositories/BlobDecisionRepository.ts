@@ -16,7 +16,26 @@ const normalizeDecision = (decision: Partial<Decision>): Decision => ({
 });
 
 const parseDecisionList = async () => {
-  const result = await get(DECISIONS_BLOB_PATH, { access: 'private' });
+  let result: Awaited<ReturnType<typeof get>> | null = null;
+
+  try {
+    result = await get(DECISIONS_BLOB_PATH, { access: 'private' });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : '';
+    const statusCode =
+      typeof error === 'object' &&
+      error !== null &&
+      'statusCode' in error &&
+      typeof (error as { statusCode?: unknown }).statusCode === 'number'
+        ? (error as { statusCode: number }).statusCode
+        : null;
+
+    if (statusCode === 404 || /not found/i.test(message)) {
+      return [] as Decision[];
+    }
+
+    throw error;
+  }
 
   if (!result || result.statusCode !== 200 || !result.stream) {
     return [] as Decision[];
@@ -28,8 +47,12 @@ const parseDecisionList = async () => {
     return [] as Decision[];
   }
 
-  const parsed = JSON.parse(text) as Partial<Decision>[];
-  return parsed.map(normalizeDecision);
+  try {
+    const parsed = JSON.parse(text) as Partial<Decision>[];
+    return parsed.map(normalizeDecision);
+  } catch {
+    return [] as Decision[];
+  }
 };
 
 const saveDecisionList = async (decisions: Decision[]) => {
