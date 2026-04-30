@@ -5,7 +5,7 @@ import { MemoryDecisionRepository } from './MemoryDecisionRepository';
 
 const resolveStorageDriver = () => {
   if (process.env.DECISIONS_STORAGE) {
-    return process.env.DECISIONS_STORAGE;
+    return process.env.DECISIONS_STORAGE.trim().toLowerCase();
   }
 
   if (process.env.BLOB_READ_WRITE_TOKEN) {
@@ -20,9 +20,10 @@ export const createDecisionRepository = (): DecisionRepository => {
 
   if (storageDriver === 'blob') {
     if (!process.env.BLOB_READ_WRITE_TOKEN) {
-      throw new Error(
-        'BLOB_READ_WRITE_TOKEN es obligatorio cuando DECISIONS_STORAGE=blob o en Vercel.',
+      console.warn(
+        'DECISIONS_STORAGE=blob pero falta BLOB_READ_WRITE_TOKEN. Se usara memoria para evitar errores 500.',
       );
+      return new MemoryDecisionRepository();
     }
 
     return new BlobDecisionRepository();
@@ -35,5 +36,17 @@ export const createDecisionRepository = (): DecisionRepository => {
     return new MemoryDecisionRepository();
   }
 
-  return new FileDecisionRepository();
+  if (storageDriver === 'file') {
+    return new FileDecisionRepository();
+  }
+
+  if (storageDriver !== 'file') {
+    console.warn(
+      `DECISIONS_STORAGE=${storageDriver} no es valido. Usa "blob", "memory" o "file".`,
+    );
+  }
+
+  return process.env.VERCEL === '1'
+    ? new MemoryDecisionRepository()
+    : new FileDecisionRepository();
 };
