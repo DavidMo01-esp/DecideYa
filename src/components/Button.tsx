@@ -5,11 +5,9 @@ export const Button = ({
   onClick = () => {},
   type = 'button',
   variant = 'primary',
-  stylesVariant,
   disabled,
   children,
 }: ButtonProps) => {
-  const resolvedVariant = stylesVariant ?? variant;
   const styles = {
     primary:
       'bg-[linear-gradient(135deg,#eb6b4a_0%,#f0b44d_100%)] text-white shadow-lg shadow-orange-200/80 hover:-translate-y-0.5 hover:shadow-xl hover:shadow-orange-200/90',
@@ -21,7 +19,7 @@ export const Button = ({
 
   return (
     <button
-      className={`${styles[resolvedVariant]} inline-flex items-center justify-center rounded-full px-5 py-3 text-sm font-semibold transition duration-200 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-orange-100 disabled:cursor-not-allowed disabled:opacity-55 disabled:hover:translate-y-0`}
+      className={`${styles[variant]} inline-flex items-center justify-center rounded-full px-5 py-3 text-sm font-semibold transition duration-200 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-orange-100 disabled:cursor-not-allowed disabled:opacity-55 disabled:hover:translate-y-0`}
       disabled={disabled}
       onClick={onClick}
       type={type}

@@ -1,3 +1,4 @@
+import { randomUUID } from 'crypto';
 import { existsSync } from 'fs';
 import { mkdir, readFile, writeFile } from 'fs/promises';
 import path from 'path';
@@ -57,7 +58,7 @@ export class FileDecisionRepository implements DecisionRepository {
     const decisions = await this.load();
     const newDecision: Decision = {
       ...decision,
-      id: crypto.randomUUID(),
+      id: randomUUID(),
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     };

@@ -1,3 +1,4 @@
+import { randomUUID } from 'crypto';
 import { get, put } from '@vercel/blob';
 import type { Decision } from '../types';
 import type { DecisionRepository } from './DecisionRepository';
@@ -55,7 +56,7 @@ export class BlobDecisionRepository implements DecisionRepository {
     const decisions = await parseDecisionList();
     const newDecision: Decision = {
       ...decision,
-      id: crypto.randomUUID(),
+      id: randomUUID(),
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     };

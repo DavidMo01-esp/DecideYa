@@ -1,3 +1,4 @@
+import { randomUUID } from 'crypto';
 import type { Decision } from '../types';
 import type { DecisionRepository } from './DecisionRepository';
 
@@ -27,7 +28,7 @@ export class MemoryDecisionRepository implements DecisionRepository {
   ): Promise<Decision> {
     const newDecision: Decision = {
       ...decision,
-      id: crypto.randomUUID(),
+      id: randomUUID(),
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     };

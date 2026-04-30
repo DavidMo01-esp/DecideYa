@@ -192,7 +192,7 @@ export default function Decisions() {
           </p>
           <p className="mt-2">{networkState.message}</p>
           <div className="mt-4">
-            <Button onClick={() => refresh()} stylesVariant="secondary">
+            <Button onClick={() => refresh()} variant="secondary">
               Reintentar
             </Button>
           </div>
@@ -220,7 +220,7 @@ export default function Decisions() {
 
             <Button
               onClick={() => refresh()}
-              stylesVariant="secondary"
+              variant="secondary"
               type="button"
             >
               {isRefreshing ? 'Actualizando...' : 'Actualizar'}
@@ -336,7 +336,7 @@ export default function Decisions() {
                   <Button
                     disabled={isSubmitting}
                     onClick={() => setDraftSelectedOption(null)}
-                    stylesVariant="secondary"
+                    variant="secondary"
                     type="button"
                   >
                     Quitar
@@ -355,7 +355,7 @@ export default function Decisions() {
                       disabled={isSubmitting}
                       key={option}
                       onClick={() => setDraftSelectedOption(option)}
-                      stylesVariant={
+                      variant={
                         draftSelectedOption === option ? 'secondary' : 'primary'
                       }
                       type="button"
@@ -375,7 +375,7 @@ export default function Decisions() {
                 <Button
                   disabled={isSubmitting || isDraftEmpty}
                   onClick={handleClearDraft}
-                  stylesVariant="secondary"
+                  variant="secondary"
                   type="button"
                 >
                   Limpiar

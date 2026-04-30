@@ -48,7 +48,7 @@ export default function DecisionDetail() {
             {networkState.message}
           </p>
           <div className="mt-6 flex flex-wrap gap-3">
-            <Button onClick={() => refresh()} stylesVariant="secondary">
+            <Button onClick={() => refresh()} variant="secondary">
               Reintentar
             </Button>
             <Link
@@ -172,7 +172,7 @@ export default function DecisionDetail() {
           <Button
             disabled={isDeleting}
             onClick={handleDelete}
-            stylesVariant="danger"
+            variant="danger"
           >
             {isDeleting ? 'Eliminando...' : 'Eliminar decision'}
           </Button>
@@ -221,7 +221,7 @@ export default function DecisionDetail() {
                   onClick={() => {
                     void handleSelectOption(null);
                   }}
-                  stylesVariant="secondary"
+                  variant="secondary"
                 >
                   Quitar
                 </Button>
@@ -252,7 +252,7 @@ export default function DecisionDetail() {
                   onClick={() => {
                     void handleSelectOption(option);
                   }}
-                  stylesVariant={
+                  variant={
                     decision.selectedOption === option ? 'secondary' : 'primary'
                   }
                 >

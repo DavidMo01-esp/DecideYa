@@ -99,7 +99,7 @@ export const Home = () => {
               </p>
               <p className="mt-2">{networkState.message}</p>
               <div className="mt-4">
-                <Button onClick={() => refresh()} stylesVariant="secondary">
+                <Button onClick={() => refresh()} variant="secondary">
                   Reintentar carga
                 </Button>
               </div>

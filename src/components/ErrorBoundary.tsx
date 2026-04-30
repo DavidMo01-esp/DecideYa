@@ -1,4 +1,4 @@
-import React, { ReactNode } from 'react';
+import React, { type ReactNode } from 'react';
 
 interface Props {
   children: ReactNode;
@@ -27,9 +27,9 @@ export class ErrorBoundary extends React.Component<Props, State> {
     if (this.state.hasError) {
       return (
         <div className="p-8 text-center">
-          <h1 className="text-2xl font-bold text-red-600 mb-4">Error en la aplicación</h1>
-          <p className="text-red-500 mb-4">{this.state.error?.message}</p>
-          <pre className="bg-red-50 p-4 rounded text-left text-sm overflow-auto">
+          <h1 className="mb-4 text-2xl font-bold text-red-600">Error en la aplicación</h1>
+          <p className="mb-4 text-red-500">{this.state.error?.message}</p>
+          <pre className="overflow-auto rounded bg-red-50 p-4 text-left text-sm">
             {this.state.error?.stack}
           </pre>
         </div>

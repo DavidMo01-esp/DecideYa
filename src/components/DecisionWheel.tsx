@@ -210,7 +210,7 @@ export default function DecisionWheel({
         <Button
           disabled={!isReady || isSpinning}
           onClick={handleInstantPick}
-          stylesVariant="secondary"
+          variant="secondary"
         >
           Elegir ahora
         </Button>
