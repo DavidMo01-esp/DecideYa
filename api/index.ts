@@ -1,13 +1,4 @@
-import { createDecisionRepository } from '../server/src/repositories/createDecisionRepository';
-import { DecisionService } from '../server/src/services/DecisionService';
-import type {
-  CreateDecisionDTO,
-  UpdateDecisionDTO,
-} from '../server/src/types';
-import {
-  validateCreateDecision,
-  validateUpdateDecision,
-} from '../server/src/validators/decisionValidator';
+import { randomUUID } from 'crypto';
 
 interface ApiRequest {
   method?: string;
@@ -23,14 +14,33 @@ interface ApiResponse {
   end(): void;
 }
 
-let cachedService: DecisionService | null = null;
+interface Decision {
+  id: string;
+  title: string;
+  options: string[];
+  selectedOption: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
 
-const getService = () => {
-  if (!cachedService) {
-    cachedService = new DecisionService(createDecisionRepository());
-  }
-  return cachedService;
-};
+interface CreateDecisionDTO {
+  title: string;
+  options: string[];
+  selectedOption?: string | null;
+}
+
+interface UpdateDecisionDTO {
+  title?: string;
+  options?: string[];
+  selectedOption?: string | null;
+}
+
+interface ValidationError {
+  field: string;
+  message: string;
+}
+
+let decisionsStore: Decision[] = [];
 
 const getPathSegments = (request: ApiRequest) => {
   const raw = request.query?.path;
@@ -65,6 +75,106 @@ const parseBody = <T>(body: unknown): T | { error: string } => {
   return body as T;
 };
 
+const isNonEmptyString = (value: unknown): value is string =>
+  typeof value === 'string' && value.trim().length > 0;
+
+const validateOptions = (options: unknown): ValidationError[] => {
+  if (!Array.isArray(options)) {
+    return [{ field: 'options', message: 'Debe ser un arreglo de opciones.' }];
+  }
+
+  if (options.length < 2) {
+    return [{ field: 'options', message: 'Debes enviar al menos 2 opciones.' }];
+  }
+
+  if (options.some((option) => !isNonEmptyString(option))) {
+    return [
+      {
+        field: 'options',
+        message: 'Todas las opciones deben ser texto no vacio.',
+      },
+    ];
+  }
+
+  return [];
+};
+
+const validateSelectedOption = (
+  selectedOption: unknown,
+  options: string[] | undefined,
+): ValidationError[] => {
+  if (selectedOption === undefined || selectedOption === null) {
+    return [];
+  }
+
+  if (typeof selectedOption !== 'string') {
+    return [
+      {
+        field: 'selectedOption',
+        message: 'selectedOption debe ser string o null.',
+      },
+    ];
+  }
+
+  if (options && !options.includes(selectedOption)) {
+    return [
+      {
+        field: 'selectedOption',
+        message: 'selectedOption debe existir dentro de options.',
+      },
+    ];
+  }
+
+  return [];
+};
+
+const validateCreateDecision = (payload: CreateDecisionDTO): ValidationError[] => {
+  const errors: ValidationError[] = [];
+
+  if (!isNonEmptyString(payload?.title)) {
+    errors.push({ field: 'title', message: 'El titulo es obligatorio.' });
+  }
+
+  errors.push(...validateOptions(payload?.options));
+  if (Array.isArray(payload?.options)) {
+    errors.push(...validateSelectedOption(payload.selectedOption, payload.options));
+  }
+
+  return errors;
+};
+
+const validateUpdateDecision = (payload: UpdateDecisionDTO): ValidationError[] => {
+  if (!payload || typeof payload !== 'object') {
+    return [{ field: 'body', message: 'Body invalido.' }];
+  }
+
+  const hasFields =
+    payload.title !== undefined ||
+    payload.options !== undefined ||
+    payload.selectedOption !== undefined;
+
+  if (!hasFields) {
+    return [{ field: 'body', message: 'Debes enviar al menos un campo.' }];
+  }
+
+  const errors: ValidationError[] = [];
+
+  if (payload.title !== undefined && !isNonEmptyString(payload.title)) {
+    errors.push({
+      field: 'title',
+      message: 'Si se envia title, debe ser texto no vacio.',
+    });
+  }
+
+  if (payload.options !== undefined) {
+    errors.push(...validateOptions(payload.options));
+  }
+
+  errors.push(...validateSelectedOption(payload.selectedOption, payload.options));
+
+  return errors;
+};
+
 const sendJson = (response: ApiResponse, code: number, payload: unknown) =>
   response.status(code).json(payload);
 
@@ -74,11 +184,8 @@ const methodNotAllowed = (response: ApiResponse, allowed: string[]) => {
 };
 
 const handleCollection = async (request: ApiRequest, response: ApiResponse) => {
-  const service = getService();
-
   if (request.method === 'GET') {
-    const decisions = await service.getAll();
-    return sendJson(response, 200, decisions);
+    return sendJson(response, 200, decisionsStore);
   }
 
   if (request.method === 'POST') {
@@ -92,7 +199,16 @@ const handleCollection = async (request: ApiRequest, response: ApiResponse) => {
       return sendJson(response, 400, { errors });
     }
 
-    const created = await service.create(payload);
+    const now = new Date().toISOString();
+    const created: Decision = {
+      id: randomUUID(),
+      title: payload.title.trim(),
+      options: payload.options.map((option) => option.trim()),
+      selectedOption: payload.selectedOption ?? null,
+      createdAt: now,
+      updatedAt: now,
+    };
+    decisionsStore.push(created);
     return sendJson(response, 201, created);
   }
 
@@ -104,14 +220,13 @@ const handleItem = async (
   response: ApiResponse,
   id: string,
 ) => {
-  const service = getService();
+  const index = decisionsStore.findIndex((decision) => decision.id === id);
 
   if (request.method === 'GET') {
-    const decision = await service.getById(id);
-    if (!decision) {
+    if (index < 0) {
       return sendJson(response, 404, { error: 'Decision no encontrada' });
     }
-    return sendJson(response, 200, decision);
+    return sendJson(response, 200, decisionsStore[index]);
   }
 
   if (request.method === 'PUT' || request.method === 'PATCH') {
@@ -125,19 +240,38 @@ const handleItem = async (
       return sendJson(response, 400, { errors });
     }
 
-    const updated = await service.update(id, payload);
-    if (!updated) {
+    if (index < 0) {
       return sendJson(response, 404, { error: 'Decision no encontrada' });
     }
+
+    const current = decisionsStore[index];
+    const nextOptions = payload.options ?? current.options;
+    const selectedCandidate =
+      payload.selectedOption === undefined
+        ? current.selectedOption
+        : payload.selectedOption;
+    const nextSelectedOption =
+      typeof selectedCandidate === 'string' && nextOptions.includes(selectedCandidate)
+        ? selectedCandidate
+        : null;
+
+    const updated: Decision = {
+      ...current,
+      ...payload,
+      options: nextOptions,
+      selectedOption: nextSelectedOption,
+      updatedAt: new Date().toISOString(),
+    };
+    decisionsStore[index] = updated;
 
     return sendJson(response, 200, updated);
   }
 
   if (request.method === 'DELETE') {
-    const removed = await service.remove(id);
-    if (!removed) {
+    if (index < 0) {
       return sendJson(response, 404, { error: 'Decision no encontrada' });
     }
+    decisionsStore = decisionsStore.filter((decision) => decision.id !== id);
     response.status(204);
     response.end();
     return;
