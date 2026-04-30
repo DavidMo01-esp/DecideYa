@@ -4,6 +4,7 @@ import { get, put } from '@vercel/blob';
 interface ApiRequest {
   method?: string;
   query?: { path?: string | string[] };
+  headers?: Record<string, string | string[] | undefined>;
   body?: unknown;
 }
 
@@ -43,6 +44,11 @@ interface ValidationError {
 
 let decisionsStore: Decision[] = [];
 const DECISIONS_BLOB_PATH = 'decisions/data.json';
+const DEVICE_ID_HEADER = 'x-device-id';
+
+interface DecisionsStorePayload {
+  byDevice: Record<string, Decision[]>;
+}
 
 const getPathSegments = (request: ApiRequest) => {
   const raw = request.query?.path;
@@ -187,54 +193,107 @@ const methodNotAllowed = (response: ApiResponse, allowed: string[]) => {
 
 const hasBlobToken = () => Boolean(process.env.BLOB_READ_WRITE_TOKEN);
 
-const loadDecisions = async (): Promise<Decision[]> => {
+const normalizeDeviceId = (value: unknown): string => {
+  if (typeof value === 'string' && value.trim().length > 0) {
+    return value.trim().toLowerCase();
+  }
+  return 'anonymous-device';
+};
+
+const getDeviceId = (request: ApiRequest): string => {
+  const headerValue = request.headers?.[DEVICE_ID_HEADER];
+  if (Array.isArray(headerValue)) {
+    return normalizeDeviceId(headerValue[0]);
+  }
+  return normalizeDeviceId(headerValue);
+};
+
+const parseStorePayload = (raw: unknown): DecisionsStorePayload => {
+  if (Array.isArray(raw)) {
+    return {
+      byDevice: {
+        'anonymous-device': raw as Decision[],
+      },
+    };
+  }
+
+  if (
+    typeof raw === 'object' &&
+    raw !== null &&
+    'byDevice' in raw &&
+    typeof (raw as { byDevice?: unknown }).byDevice === 'object' &&
+    (raw as { byDevice?: unknown }).byDevice !== null
+  ) {
+    return raw as DecisionsStorePayload;
+  }
+
+  return { byDevice: {} };
+};
+
+const loadStore = async (): Promise<DecisionsStorePayload> => {
   if (!hasBlobToken()) {
-    return decisionsStore;
+    return {
+      byDevice: {
+        'anonymous-device': decisionsStore,
+      },
+    };
   }
 
   try {
     const blob = await get(DECISIONS_BLOB_PATH, { access: 'private' });
     if (!blob?.stream || blob.statusCode !== 200) {
-      return [];
+      return { byDevice: {} };
     }
 
     const text = await new Response(blob.stream).text();
     if (!text.trim()) {
-      return [];
+      return { byDevice: {} };
     }
 
     const parsed = JSON.parse(text) as unknown;
-    if (!Array.isArray(parsed)) {
-      return [];
-    }
-
-    return parsed as Decision[];
+    return parseStorePayload(parsed);
   } catch (error) {
     const message = error instanceof Error ? error.message : '';
     if (/not found/i.test(message)) {
-      return [];
+      return { byDevice: {} };
     }
     throw error;
   }
 };
 
-const saveDecisions = async (items: Decision[]): Promise<void> => {
-  decisionsStore = items;
+const saveStore = async (store: DecisionsStorePayload): Promise<void> => {
+  decisionsStore = store.byDevice['anonymous-device'] ?? [];
 
   if (!hasBlobToken()) {
     return;
   }
 
-  await put(DECISIONS_BLOB_PATH, JSON.stringify(items, null, 2), {
+  await put(DECISIONS_BLOB_PATH, JSON.stringify(store, null, 2), {
     access: 'private',
     allowOverwrite: true,
     contentType: 'application/json',
   });
 };
 
+const getDeviceDecisions = (
+  store: DecisionsStorePayload,
+  deviceId: string,
+): Decision[] => store.byDevice[deviceId] ?? [];
+
+const setDeviceDecisions = (
+  store: DecisionsStorePayload,
+  deviceId: string,
+  decisions: Decision[],
+) => {
+  store.byDevice[deviceId] = decisions;
+};
+
 const handleCollection = async (request: ApiRequest, response: ApiResponse) => {
+  const deviceId = getDeviceId(request);
+
   if (request.method === 'GET') {
-    const decisions = await loadDecisions();
+    const store = await loadStore();
+    const decisions = getDeviceDecisions(store, deviceId);
     return sendJson(response, 200, decisions);
   }
 
@@ -258,9 +317,11 @@ const handleCollection = async (request: ApiRequest, response: ApiResponse) => {
       createdAt: now,
       updatedAt: now,
     };
-    const decisions = await loadDecisions();
+    const store = await loadStore();
+    const decisions = getDeviceDecisions(store, deviceId);
     decisions.push(created);
-    await saveDecisions(decisions);
+    setDeviceDecisions(store, deviceId, decisions);
+    await saveStore(store);
     return sendJson(response, 201, created);
   }
 
@@ -272,7 +333,9 @@ const handleItem = async (
   response: ApiResponse,
   id: string,
 ) => {
-  const decisions = await loadDecisions();
+  const deviceId = getDeviceId(request);
+  const store = await loadStore();
+  const decisions = getDeviceDecisions(store, deviceId);
   const index = decisions.findIndex((decision) => decision.id === id);
 
   if (request.method === 'GET') {
@@ -316,7 +379,8 @@ const handleItem = async (
       updatedAt: new Date().toISOString(),
     };
     decisions[index] = updated;
-    await saveDecisions(decisions);
+    setDeviceDecisions(store, deviceId, decisions);
+    await saveStore(store);
 
     return sendJson(response, 200, updated);
   }
@@ -326,7 +390,8 @@ const handleItem = async (
       return sendJson(response, 404, { error: 'Decision no encontrada' });
     }
     const next = decisions.filter((decision) => decision.id !== id);
-    await saveDecisions(next);
+    setDeviceDecisions(store, deviceId, next);
+    await saveStore(store);
     response.status(204);
     response.end();
     return;

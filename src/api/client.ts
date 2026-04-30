@@ -11,6 +11,8 @@ import {
 
 const LOCAL_API_PORT = '3001';
 const LOCAL_API_PROTOCOL = 'http:';
+const DEVICE_ID_STORAGE_KEY = 'decideya-device-id';
+const DEVICE_ID_HEADER = 'x-device-id';
 
 const isPrivateIpv4Hostname = (hostname: string) =>
   /^10\./.test(hostname) ||
@@ -40,6 +42,28 @@ const resolveDefaultApiBaseUrl = () => {
 export const API_BASE_URL = (
   import.meta.env.VITE_API_BASE_URL ?? resolveDefaultApiBaseUrl()
 ).replace(/\/$/, '');
+
+const createDeviceId = () => {
+  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+    return crypto.randomUUID();
+  }
+  return `device-${Date.now()}-${Math.floor(Math.random() * 1_000_000)}`;
+};
+
+const getDeviceId = () => {
+  if (typeof window === 'undefined') {
+    return 'server-device';
+  }
+
+  const existing = window.localStorage.getItem(DEVICE_ID_STORAGE_KEY);
+  if (existing && existing.trim().length > 0) {
+    return existing;
+  }
+
+  const next = createDeviceId();
+  window.localStorage.setItem(DEVICE_ID_STORAGE_KEY, next);
+  return next;
+};
 
 const isValidationErrorResponse = (
   value: unknown,
@@ -131,10 +155,12 @@ const request = async <T>(
   path: string,
   { body, headers, ...init }: RequestOptions = {},
 ) => {
+  const deviceId = getDeviceId();
   const response = await fetch(`${API_BASE_URL}${path}`, {
     ...init,
     headers: {
       Accept: 'application/json',
+      [DEVICE_ID_HEADER]: deviceId,
       ...headers,
       ...(body ? { 'Content-Type': 'application/json' } : {}),
     },
